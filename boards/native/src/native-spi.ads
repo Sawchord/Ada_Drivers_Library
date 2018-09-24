@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 --                                                                          --
---                     Copyright (C) 2018, Adacore                          --
+--                    Copyright (C) 2018, AdaCore                           --
 --                                                                          --
 --  Redistribution and use in source and binary forms, with or without      --
 --  modification, are permitted provided that the following conditions are  --
@@ -11,7 +11,7 @@
 --        notice, this list of conditions and the following disclaimer in   --
 --        the documentation and/or other materials provided with the        --
 --        distribution.                                                     --
---     3. Neither the name of the copyright holder nor the names of its     --
+--     3. Neither the name of STMicroelectronics nor the names of its       --
 --        contributors may be used to endorse or promote products derived   --
 --        from this software without specific prior written permission.     --
 --                                                                          --
@@ -29,54 +29,73 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+
 with HAL;
+with HAL.SPI;
 with System;
 
-with Interfaces; use Interfaces;
-with Interfaces.C; use Interfaces.C;
+with Ada.Strings.Bounded;
 
-package IOCTL is
+with Interfaces;
+with IOCTL; use IOCTL;
 
-   type Direction is
-     (None,
-      Read,
-      Write)
-   with Size => 2;
-   for Direction use
-     (None => 2#00#,
-      Read => 2#01#,
-      Write => 2#10#);
+package Native.SPI is
 
-   type Request is record
-      dir: Direction;
-      typ: HAL.UInt8;
-      nr: HAL.UInt8;
-      size: HAL.UInt14;
-   end record
-   with Volatile_Full_Access, Size => 32,
-   Bit_Order => System.Low_Order_First;
-   for Request use record
-      dir at 0 range 0..1;
-      typ at 0 range 2..9;
-      nr at 0 range 10..17;
-      size at 0 range 18..31;
+   type SPI_Port is limited new HAL.SPI.SPI_Port with private;
+
+   type SPI_Clock_Polarity is (High, Low);
+
+   type SPI_Clock_Phase is (P1Edge, P2Edge);
+
+   type SPI_First_Bit is (MSB, LSB);
+
+   package Device_String is new
+     Ada.Strings.Bounded.Generic_Bounded_Length (Max => 80);
+   type SPI_Configuration is record
+      Data_Size : HAL.SPI.SPI_Data_Size;
+      Clock_Polarity : SPI_Clock_Polarity;
+      Clock_Phase : SPI_Clock_Phase;
+      Baud_Rate : HAL.UInt16;
+      Device : Device_String.Bounded_String;
    end record;
-   pragma Pack (Request);
 
-   type File_Id is new int;
-   type File_Mode is new int;
+   function Configure (Conf : SPI_Configuration) return SPI_Port;
 
-   function ioctl (File_Desc : in File_Id; req : in Request; point : in out int)
-                   return int;
-   pragma import(C, ioctl, "ioctl");
+   overriding
+   function Data_Size (This : SPI_Port) return HAL.SPI.SPI_Data_Size;
 
-   -- TODO: On 32 Bit machines, this is a Unsigned_32 on
-   -- 64 bit machines, this is a Unsigned_64. Use conditional compilation.
-   Err_No : Unsigned_64;
-   pragma Import (C, Err_No, "errno");
+   overriding
+   procedure Transmit
+     (This   : in out SPI_Port;
+      Data   : HAL.SPI.SPI_Data_8b;
+      Status : out HAL.SPI.SPI_Status;
+      Timeout : Natural := 1000);
 
-   function open(path : string; flags : int; mode : File_Mode ) return File_Id;
-   pragma import(C, open, "open");
+   overriding
+   procedure Transmit
+     (This   : in out SPI_Port;
+      Data   : HAL.SPI.SPI_Data_16b;
+      Status : out HAL.SPI.SPI_Status;
+      Timeout : Natural := 1000);
 
+   overriding
+   procedure Receive
+     (This    : in out SPI_Port;
+      Data    : out HAL.SPI.SPI_Data_8b;
+      Status  : out HAL.SPI.SPI_Status;
+      Timeout : Natural := 1000);
 
-end IOCTL;
+     procedure Receive
+     (This    : in out SPI_Port;
+      Data    : out HAL.SPI.SPI_Data_16b;
+      Status  : out HAL.SPI.SPI_Status;
+Timeout : Natural := 1000);
+
+private
+
+   type SPI_Port is limited new HAL.SPI.SPI_Port with record
+      File_Desc : File_Id;
+      Data_Size : HAL.SPI.SPI_Data_Size;
+   end record;
+
+end Native.Spi;
