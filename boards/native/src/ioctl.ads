@@ -55,20 +55,12 @@ package IOCTL is
    end record
    with Size => 32,
    Bit_Order => System.Low_Order_First;
-   --for Request use record
-   --   dir at 0 range 0..1;
-   --   typ at 0 range 2..9;
-   --   nr at 0 range 10..17;
-   --   size at 0 range 18..31;
-   --end record;
-
    for Request use record
       dir at 0 range 30..31;
       typ at 0 range 8..15;
       nr at 0 range 0..7;
       size at 0 range 16..29;
    end record;
-   --pragma Pack (Request);
 
    type File_Id is new int;
    type File_Mode is new int;
@@ -78,7 +70,6 @@ package IOCTL is
    Err_No : Unsigned_32;
    pragma Thread_Local_Storage (Err_No);
    pragma Import (C, Err_No, "errno");
-
 
    function Open (Path : String;
                   Flags : int;

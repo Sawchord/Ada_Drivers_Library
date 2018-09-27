@@ -8,18 +8,16 @@ package body Native.SPI is
       File : File_Id;
       Ret : Interfaces.C.int;
 
-      -- TOOD: Move this function into IOCTL Package
+      -- TODO: Move this function into IOCTL Package
+      -- When moving this inot IOCTL package, Error: invalid use of 'IOCTL'
+      -- is risen.
       function Ioctl (File_Desc : in File_Id;
                       Req : in Request;
                       Data : in System.Address)
                       return Interfaces.C.int;
       pragma Import (C, Ioctl, "ioctl");
-      pragma Import_Function(Ioctl, Mechanism => (File_Desc => Value,
-                                                  Req => Value,
-                                                  Data => Value));
+      pragma Import_Function(Ioctl, Mechanism => Value);
    begin
-
-      -- TODO: Return Error if Errno is -1 or Ioctl returns not 0
 
       -- Open file
       -- TODO: Make Mode_Flags an enum (in ioctl.ads?)
@@ -54,6 +52,8 @@ package body Native.SPI is
       end if;
 
       declare
+         -- NOTE: Many devices (e.g. RPI) do not support 16 bits per word
+         -- We simulate 16 bits per word by transmitting 2 8 bit words.
          BPW : HAL.UInt8 := 8;
       begin
          Ret := Ioctl (File, SPI_BITS_PER_WORD(Write), BPW'Address);
@@ -94,6 +94,8 @@ package body Native.SPI is
 
       Ret : Size;
    begin
+      -- TODO: Check whether HAL should deselect CS after every transfer, or
+      -- keep CS active during the transfer
 
       -- Check if provided data matches configuration
       if (This.Data_Size /= HAL.SPI.Data_Size_8b) then
@@ -118,7 +120,11 @@ package body Native.SPI is
       Data   : HAL.SPI.SPI_Data_16b;
       Status : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
+
+      Ret : Size;
    begin
+
+      -- TODO: This Function can only transmit in little endian.
 
       -- Check if provided data matches configuration
       if (This.Data_Size /= HAL.SPI.Data_Size_16b) then
@@ -126,8 +132,13 @@ package body Native.SPI is
          return;
       end if;
 
-      -- 16 BPW is currently unimplemented
-      Status := Err_Error;
+      Ret := Write (This.File_Desc, Data'Address, 2 * Data'Length);
+
+      if Integer(ret) /= 2 * Data'Length then
+         Status := Err_Error;
+      else
+         Status := Ok;
+      end if;
 
    end Transmit;
 

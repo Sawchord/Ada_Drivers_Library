@@ -9,7 +9,7 @@ with Native.SPI; -- use Native.SPI;
 procedure Spi_Test is
    Device : String := "/dev/spidev0.0";
    Conf : Native.SPI.SPI_Configuration :=
-       (Data_Size => HAL.SPI.Data_Size_8b,
+       (Data_Size => HAL.SPI.Data_Size_16b,
         Clock_Polarity => Native.SPI.High,
         Clock_Phase => Native.SPI.P1Edge,
         Baud_Rate => 100_000);
@@ -17,7 +17,7 @@ procedure Spi_Test is
    Port : Native.SPI.SPI_Port;
    Status : HAL.SPI.SPI_Status;
 
-   Data : HAL.SPI.SPI_Data_8b := (1,2,3,4);
+   Data : HAL.SPI.SPI_Data_16b := (1,2,3,4);
 begin
    Put_Line ("Hello SPI");
 
