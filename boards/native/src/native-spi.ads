@@ -42,6 +42,8 @@ with Interfaces.C; use Interfaces.C;
 
 with IOCTL; use IOCTL;
 
+with Ada.Unchecked_Conversion;
+
 -- TODO: Remove this after finishing Debuging
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
@@ -58,7 +60,7 @@ package Native.SPI is
 
    type SPI_Slave_Management is (Software_Managed, Hardware_Managed);
 
-   type SPI_Transmission is record
+   type SPI_IOC_Transfer is record
       Tx_Buf        : HAL.UInt64;
       Rx_Buf        : HAL.UInt64;
       Len           : HAL.UInt32;
@@ -67,9 +69,10 @@ package Native.SPI is
       Bits_Per_Word : HAL.UInt8;
       Cs_Change     : HAL.UInt8;
       Tx_Nbits      : HAL.UInt8;
-      Rx_NBits      : HAL.UInt8;
-      Pad           : HAL.Uint16;
+      Rx_Nbits      : HAL.UInt8;
+      Pad           : HAL.Uint16 := 0;
    end record;
+   pragma Pack (SPI_IOC_Transfer);
 
    type SPI_Configuration is record
       Data_Size      : HAL.SPI.SPI_Data_Size;
@@ -122,29 +125,42 @@ private
       Config : SPI_Configuration;
    end record;
 
+   type Tranceive_Mode is (Transmit, Receive, Transceive);
    -- TODO: Add transceive function using the IOCTL call
+   procedure Transceive
+     (This : in out SPI_Port;
+      Out_Data : out HAL.SPI.SPI_Data_16b;
+      In_Data : in HAL.SPI.SPI_Data_16b;
+      Mode : Tranceive_Mode)
+     with Pre => Mode /= Transceive or Out_Data'Length = In_Data'Length;
 
    SPI_MAGIC : HAL.UInt8 := HAL.Uint8(107); -- from spidev.h (value of 'k')
 
-   function SPI_MODE (dir : in Direction) return Request is
+   function SPI_TRANSFER (n : Positive) return Request is
+     (dir => Write,
+      typ => SPI_MAGIC,
+      nr => 0,
+      size => HAL.UInt14(n * SPI_IOC_Transfer'Size));
+
+   function SPI_MODE (dir : Direction) return Request is
      (dir  => dir,
       typ  => SPI_MAGIC,
       nr   => 1,	-- from spidev.h
       size => 1);	-- from spidev.h (size of u8)
 
-   function SPI_LSB_FIRST (dir : in Direction) return Request is
+   function SPI_LSB_FIRST (dir : Direction) return Request is
      (dir  => dir,
       typ  => SPI_MAGIC,
       nr   => 2,	-- from spidev.h
       size => 1);	-- from spidev.h (size of u8)
 
-   function SPI_BITS_PER_WORD (dir : in Direction) return Request is
+   function SPI_BITS_PER_WORD (dir : Direction) return Request is
      (dir  => dir,
       typ  => SPI_MAGIC,
       nr   => 3,	-- from spidev.h
       size => 1);	-- deom spidev.h (size of u8)
 
-   function SPI_MAX_SPEED_HZ (dir : in Direction) return Request is
+   function SPI_MAX_SPEED_HZ (dir : Direction) return Request is
      (dir  => dir,
       typ  => SPI_MAGIC,
       nr   => 4,	-- from spidev.h

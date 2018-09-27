@@ -172,5 +172,56 @@ package body Native.SPI is
 
    end Receive;
 
+   procedure Transceive
+     (This : in out SPI_Port;
+      Out_Data : out HAL.SPI.SPI_Data_16b;
+      In_Data : in HAL.SPI.SPI_Data_16b;
+      Mode : Tranceive_Mode) is
+
+      Tx_Buf : HAL.UInt16 := 0;
+      Rx_Buf : HAL.UInt16 := 0;
+
+      pragma Warnings (Off, "types for unchecked conversion have different sizes");
+      function Address_To_UInt64
+      is new Ada.Unchecked_Conversion(Source => System.Address,
+                                      Target => HAL.UInt64);
+      pragma Warnings (On, "types for unchecked conversion have different sizes");
+
+   begin
+
+      for I in 0..Out_Data'Length loop
+
+         if Mode = Transmit or Mode = Transceive then
+            Tx_Buf := In_Data(I);
+         end if;
+
+         declare
+            Transmission : SPI_IOC_Transfer :=
+              (Tx_Buf => Address_To_UInt64 (Tx_Buf'Address),
+               Rx_Buf => Address_To_UInt64 (Rx_Buf'Address),
+               Len => 2,
+               Speed_Hz => Hal.Uint32 (This.Config.Baud_Rate),
+               Delay_Usecs => 0,
+               Bits_Per_Word => 8,
+               Cs_Change => 0,
+               Tx_Nbits => 0,
+               Rx_Nbits => 0,
+               Pad => 0);
+
+            --Ret : Interfaces.C.int;
+         begin
+            --Ret := Ioctl (This.File_Desc, SPI_TRANSFER(1),
+            --              Transmission'Address);
+            null;
+         end;
+
+         if Mode = Receive or Mode = Transceive then
+            Out_Data(I) := Rx_Buf;
+         end if;
+
+      end loop;
+
+   end Transceive;
+
 
 end Native.SPI;
