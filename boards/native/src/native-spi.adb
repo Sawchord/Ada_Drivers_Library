@@ -1,11 +1,14 @@
 package body Native.SPI is
 
    function Configure (Device : String;
-                       Conf : SPI_Configuration) return SPI_Port is
+                       Conf : SPI_Configuration;
+                       Status : out HAL.SPI.SPI_Status)
+                       return SPI_Port is
 
       File : File_Id;
       Ret : Interfaces.C.int;
 
+      -- TOOD: Move this function into IOCTL Package
       function Ioctl (File_Desc : in File_Id;
                       Req : in Request;
                       Data : in out HAL.UInt32)
@@ -16,16 +19,16 @@ package body Native.SPI is
                                                   Data => Reference));
    begin
 
+      -- TODO: Return Error if Errno is -1 or Ioctl returns not 0
+
       -- Open file
       -- TODO: Make Mode_Flags an enum (in ioctl.ads?)
       File := Open (Device, 8#02#, 777);
-      Put ("Opened File:");
-      Put (Integer(File), 2);
-      New_Line;
 
-      Put ("File Open Errno:");
-      Put (Integer(Err_No), 2);
-      New_Line;
+      if (Integer(Err_No) /= 0) then
+         Status := Err_Error;
+         return SPI_Port'(File_Desc => -1, Data_Size => Conf.Data_Size);
+      end if;
 
       -- Set the mode of the SPI Device
       declare
@@ -87,6 +90,7 @@ package body Native.SPI is
       Put (Integer(Err_No), 2);
       New_Line;
 
+      Status := HAL.SPI.Ok;
       return SPI_Port'(File_Desc => File, Data_Size => Conf.Data_Size);
    end Configure;
 
@@ -102,8 +106,26 @@ package body Native.SPI is
       Data   : HAL.SPI.SPI_Data_8b;
       Status : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
+
+      Data_Addr : System.Address;
+      Ret : Size;
    begin
-      null;
+
+      -- Check if provided data matches configuration
+      if (This.Data_Size /= HAL.SPI.Data_Size_8b) then
+         Status := HAL.SPI.Err_Error;
+         return;
+      end if;
+
+      Data_Addr := Data'Address;
+
+      Ret := Write (This.File_Desc, Data_Addr, Data'Size);
+
+      Put_Line ("Value returned:");
+      Put (Integer(Ret), 2);
+      New_Line;
+
+      Status := Ok;
    end Transmit;
 
 

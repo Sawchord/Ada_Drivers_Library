@@ -80,24 +80,22 @@ package IOCTL is
    pragma Import (C, Err_No, "errno");
 
 
-
-
    function Open (Path : String;
                   Flags : int;
                   Mode : File_Mode)
                   return File_Id;
-   pragma import(C, open, "open");
+   pragma Import(C, open, "open");
 
    function Read (File_Desc : File_Id;
                   Data : in out System.Address;
                   Length : Size)
                   return Size;
-   pragma import(C, read, "read");
+   pragma Import(C, read, "read");
 
    function Write (File_Desc : File_Id;
                    Data : in out System.Address;
                    Length : Size)
                    return Size;
-   pragma import(C, write, "write");
+   pragma Import(C, write, "write");
 
 end IOCTL;

@@ -31,7 +31,7 @@
 
 
 with HAL; use HAL;
-with HAL.SPI;
+with HAL.SPI; use HAL.SPI;
 with System;
 with System.Address_Image;
 
@@ -67,8 +67,10 @@ package Native.SPI is
       Baud_Rate : Positive;
    end record;
 
-   function Configure (Device : String;
-                       Conf : SPI_Configuration) return SPI_Port;
+   function Configure (Device : in String;
+                       Conf : in SPI_Configuration;
+                       Status : out HAL.SPI.SPI_Status)
+                       return SPI_Port;
 
    overriding
    function Data_Size (This : SPI_Port) return HAL.SPI.SPI_Data_Size;

@@ -3,8 +3,8 @@ with Text_IO; use Text_IO;
 with IOCTL;
 
 with HAL;
-with HAL.SPI;
-with Native.SPI;
+with HAL.SPI; use HAL.SPI;
+with Native.SPI; -- use Native.SPI;
 
 procedure Spi_Test is
    Device : String := "/dev/spidev0.0";
@@ -15,9 +15,27 @@ procedure Spi_Test is
         Baud_Rate => 100_000);
 
    Port : Native.SPI.SPI_Port;
+   Status : HAL.SPI.SPI_Status;
+
+   Data : HAL.SPI.SPI_Data_8b := (1,2,3,4);
 begin
-   Put_Line("Hello SPI");
+   Put_Line ("Hello SPI");
 
-   Port := Native.SPI.Configure(Device, Conf);
+   -- Initialize the Port with given Configuration
+   Port := Native.SPI.Configure(Device, Conf, Status);
 
+   if (Status /= HAL.SPI.Ok) then
+      Put_Line ("Error while initializing SPI Device");
+      return;
+   end if;
+
+   -- Send Data over the Wire
+   Put_Line ("SPI Initialized, attempt to send");
+   Port.Transmit(Data, Status);
+
+   if (Status /= HAL.SPI.Ok) then
+      Put_Line ("Error while transmitting data");
+      return;
+   end if;
+   Put_Line ("Transmission was successfull");
 end;
