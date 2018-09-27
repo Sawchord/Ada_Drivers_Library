@@ -2,12 +2,13 @@ package body Native.SPI is
 
    function Configure (Device : String;
                        Conf : SPI_Configuration) return SPI_Port is
+
       File : File_Id;
+      Ret : Interfaces.C.int;
 
       function Ioctl (File_Desc : in File_Id;
                       Req : in Request;
-                      --Req : HAL.UInt32;
-                      Data : in out HAL.UInt8)
+                      Data : in out HAL.UInt32)
                       return Interfaces.C.int;
       pragma Import (C, Ioctl, "ioctl");
       pragma Import_Function(Ioctl, Mechanism => (File_Desc => Value,
@@ -29,7 +30,6 @@ package body Native.SPI is
       -- Set the mode of the SPI Device
       declare
          Mode : HAL.UInt8;
-         Ret : Interfaces.C.int;
       begin
          case Conf.Clock_Phase is
            when P1Edge => Mode := 0;
@@ -38,33 +38,62 @@ package body Native.SPI is
 
          case Conf.Clock_Polarity is
             when High => null;
-               -- TODO: Check that Bitwise operation here works
             when Low  => Mode := Mode or 2#10#;
          end case;
 
-         Put ("Selected Mode:");
-         Put (Integer(Mode), 2);
-         New_Line;
-
-         Ret := Ioctl (File, SPI_MODE(Write), Mode);
-
-         Put ("Ioctl return value:");
-         Put (Integer(Ret), 2);
-         New_Line;
-
-         Put ("Mode Selection Errno:");
-         Put (Integer(Err_No), 1);
-         New_Line;
+         Ret := Ioctl (File, SPI_MODE(Write), HAL.UInt32(Mode));
 
       end;
 
-      return SPI_Port'(File_Desc => 0, Data_Size => HAL.SPI.Data_Size_16b);
+      Put ("Ioctl return value:");
+      Put (Integer(Ret), 2);
+      New_Line;
+
+      Put ("Mode Selection Errno:");
+      Put (Integer(Err_No), 2);
+      New_Line;
+
+      declare
+         BPW : HAL.UInt8;
+      begin
+         case Conf.Data_Size is
+            when HAL.SPI.Data_Size_8b => BPW := 8;
+            when HAL.SPI.Data_Size_16b => BPW := 16;
+         end case;
+
+         Ret := Ioctl (File, SPI_BITS_PER_WORD(Write), HAL.UInt32(BPW));
+
+      end;
+
+      Put ("Ioctl return value:");
+      Put (Integer(Ret), 2);
+      New_Line;
+
+      Put ("Bits per Word Errno:");
+      Put (Integer(Err_No), 2);
+      New_Line;
+
+      declare
+         Baud : HAL.Uint32 := HAL.UInt32(Conf.Baud_Rate);
+      begin
+         Ret := Ioctl (File, SPI_MAX_SPEED_HZ(Write), Baud);
+      end;
+
+      Put ("Ioctl return value:");
+      Put (Integer(Ret), 2);
+      New_Line;
+
+      Put ("Baud Rate Errno:");
+      Put (Integer(Err_No), 2);
+      New_Line;
+
+      return SPI_Port'(File_Desc => File, Data_Size => Conf.Data_Size);
    end Configure;
 
    overriding
    function Data_Size (This : SPI_Port) return HAL.SPI.SPI_Data_Size is
    begin
-      return HAL.SPI.Data_Size_16b;
+      return This.Data_Size;
    end Data_Size;
 
    overriding

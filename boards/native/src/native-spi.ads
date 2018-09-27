@@ -38,9 +38,11 @@ with System.Address_Image;
 with Ada.Strings.Bounded;
 
 with Interfaces;
+with Interfaces.C; use Interfaces.C;
+
 with IOCTL; use IOCTL;
 
-with Interfaces.C;
+
 
 -- TODO: Remove this after finishing Debuging
 with Ada.Text_IO; use Ada.Text_IO;
