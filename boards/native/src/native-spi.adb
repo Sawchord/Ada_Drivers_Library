@@ -11,12 +11,12 @@ package body Native.SPI is
       -- TOOD: Move this function into IOCTL Package
       function Ioctl (File_Desc : in File_Id;
                       Req : in Request;
-                      Data : in out HAL.UInt32)
+                      Data : in System.Address)
                       return Interfaces.C.int;
       pragma Import (C, Ioctl, "ioctl");
       pragma Import_Function(Ioctl, Mechanism => (File_Desc => Value,
                                                   Req => Value,
-                                                  Data => Reference));
+                                                  Data => Value));
    begin
 
       -- TODO: Return Error if Errno is -1 or Ioctl returns not 0
@@ -44,51 +44,36 @@ package body Native.SPI is
             when Low  => Mode := Mode or 2#10#;
          end case;
 
-         Ret := Ioctl (File, SPI_MODE(Write), HAL.UInt32(Mode));
+         Ret := Ioctl (File, SPI_MODE(Write), Mode'Address);
 
       end;
 
-      Put ("Ioctl return value:");
-      Put (Integer(Ret), 2);
-      New_Line;
-
-      Put ("Mode Selection Errno:");
-      Put (Integer(Err_No), 2);
-      New_Line;
+      if Integer(Ret) /= 0 then
+         Status := Err_Error;
+         return SPI_Port'(File_Desc => -1, Data_Size => Conf.Data_Size);
+      end if;
 
       declare
-         BPW : HAL.UInt8;
+         BPW : HAL.UInt8 := 8;
       begin
-         case Conf.Data_Size is
-            when HAL.SPI.Data_Size_8b => BPW := 8;
-            when HAL.SPI.Data_Size_16b => BPW := 16;
-         end case;
-
-         Ret := Ioctl (File, SPI_BITS_PER_WORD(Write), HAL.UInt32(BPW));
-
+         Ret := Ioctl (File, SPI_BITS_PER_WORD(Write), BPW'Address);
       end;
 
-      Put ("Ioctl return value:");
-      Put (Integer(Ret), 2);
-      New_Line;
-
-      Put ("Bits per Word Errno:");
-      Put (Integer(Err_No), 2);
-      New_Line;
+      if Integer(Ret) /= 0 then
+         Status := Err_Error;
+         return SPI_Port'(File_Desc => -1, Data_Size => Conf.Data_Size);
+      end if;
 
       declare
          Baud : HAL.Uint32 := HAL.UInt32(Conf.Baud_Rate);
       begin
-         Ret := Ioctl (File, SPI_MAX_SPEED_HZ(Write), Baud);
+         Ret := Ioctl (File, SPI_MAX_SPEED_HZ(Write), Baud'Address);
       end;
 
-      Put ("Ioctl return value:");
-      Put (Integer(Ret), 2);
-      New_Line;
-
-      Put ("Baud Rate Errno:");
-      Put (Integer(Err_No), 2);
-      New_Line;
+      if Integer(Ret) /= 0 then
+         Status := Err_Error;
+         return SPI_Port'(File_Desc => -1, Data_Size => Conf.Data_Size);
+      end if;
 
       Status := HAL.SPI.Ok;
       return SPI_Port'(File_Desc => File, Data_Size => Conf.Data_Size);
@@ -133,8 +118,6 @@ package body Native.SPI is
       Data   : HAL.SPI.SPI_Data_16b;
       Status : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
-
-      Ret : Size;
    begin
 
       -- Check if provided data matches configuration
@@ -143,14 +126,8 @@ package body Native.SPI is
          return;
       end if;
 
-      Ret := Write (This.File_Desc, Data'Address, Data'Length);
-
-      if Integer(ret) /= Data'Length then
-         Status := Err_Error;
-      else
-         Status := Ok;
-      end if;
-
+      -- 16 BPW is currently unimplemented
+      Status := Err_Error;
 
    end Transmit;
 
@@ -162,11 +139,7 @@ package body Native.SPI is
       Timeout : Natural := 1000) is
    begin
 
-      -- Check if provided data matches configuration
-      if (This.Data_Size /= HAL.SPI.Data_Size_8b) then
-         Status := HAL.SPI.Err_Error;
-         return;
-      end if;
+      null;
 
    end Receive;
 
@@ -177,11 +150,7 @@ package body Native.SPI is
       Timeout : Natural := 1000) is
    begin
 
-      -- Check if provided data matches configuration
-      if (This.Data_Size /= HAL.SPI.Data_Size_16b) then
-         Status := HAL.SPI.Err_Error;
-         return;
-      end if;
+      null;
 
    end Receive;
 
