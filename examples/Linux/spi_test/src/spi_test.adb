@@ -9,11 +9,12 @@ with Native.SPI; -- use Native.SPI;
 procedure Spi_Test is
    Device : String := "/dev/spidev0.0";
    Conf : Native.SPI.SPI_Configuration :=
-       (Data_Size => HAL.SPI.Data_Size_16b,
+       (Data_Size      => HAL.SPI.Data_Size_16b,
         Clock_Polarity => Native.SPI.Low,
-        Clock_Phase => Native.SPI.P2Edge,
-        First_Bit => Native.SPI.MSB,
-        Baud_Rate => 100_000);
+        Clock_Phase    => Native.SPI.P2Edge,
+        Slave_Manager  => Native.SPI.Hardware_Managed,
+        First_Bit      => Native.SPI.MSB,
+        Baud_Rate      => 100_000);
 
    Port : Native.SPI.SPI_Port;
    Status : HAL.SPI.SPI_Status;

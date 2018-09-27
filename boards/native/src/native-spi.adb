@@ -1,7 +1,7 @@
 package body Native.SPI is
 
    function Configure (Device : String;
-                       Conf : SPI_Configuration;
+                       Conf   : SPI_Configuration;
                        Status : out HAL.SPI.SPI_Status)
                        return SPI_Port is
 
@@ -12,8 +12,8 @@ package body Native.SPI is
       -- When moving this inot IOCTL package, Error: invalid use of 'IOCTL'
       -- is risen.
       function Ioctl (File_Desc : in File_Id;
-                      Req : in Request;
-                      Data : in System.Address)
+                      Req       : in Request;
+                      Data      : in System.Address)
                       return Interfaces.C.int;
       pragma Import (C, Ioctl, "ioctl");
       pragma Import_Function(Ioctl, Mechanism => Value);

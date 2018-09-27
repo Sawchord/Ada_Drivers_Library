@@ -42,8 +42,6 @@ with Interfaces.C; use Interfaces.C;
 
 with IOCTL; use IOCTL;
 
-
-
 -- TODO: Remove this after finishing Debuging
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
@@ -58,18 +56,32 @@ package Native.SPI is
 
    type SPI_First_Bit is (MSB, LSB);
 
-   package Device_String is new
-     Ada.Strings.Bounded.Generic_Bounded_Length (Max => 80);
+   type SPI_Slave_Management is (Software_Managed, Hardware_Managed);
+
+   type SPI_Transmission is record
+      Tx_Buf        : HAL.UInt64;
+      Rx_Buf        : HAL.UInt64;
+      Len           : HAL.UInt32;
+      Speed_Hz      : HAL.UInt32;
+      Delay_Usecs   : HAL.UInt16;
+      Bits_Per_Word : HAL.UInt8;
+      Cs_Change     : HAL.UInt8;
+      Tx_Nbits      : HAL.UInt8;
+      Rx_NBits      : HAL.UInt8;
+      Pad           : HAL.Uint16;
+   end record;
+
    type SPI_Configuration is record
-      Data_Size : HAL.SPI.SPI_Data_Size;
+      Data_Size      : HAL.SPI.SPI_Data_Size;
       Clock_Polarity : SPI_Clock_Polarity;
-      Clock_Phase : SPI_Clock_Phase;
-      First_Bit : SPI_First_Bit;
-      Baud_Rate : Positive;
+      Clock_Phase    : SPI_Clock_Phase;
+      First_Bit      : SPI_First_Bit;
+      Slave_Manager  : SPI_Slave_Management;
+      Baud_Rate      : Positive;
    end record;
 
    function Configure (Device : in String;
-                       Conf : in SPI_Configuration;
+                       Conf   : in SPI_Configuration;
                        Status : out HAL.SPI.SPI_Status)
                        return SPI_Port;
 
@@ -109,6 +121,8 @@ private
       File_Desc : File_Id;
       Config : SPI_Configuration;
    end record;
+
+   -- TODO: Add transceive function using the IOCTL call
 
    SPI_MAGIC : HAL.UInt8 := HAL.Uint8(107); -- from spidev.h (value of 'k')
 
