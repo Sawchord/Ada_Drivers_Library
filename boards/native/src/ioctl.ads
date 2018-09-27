@@ -67,34 +67,34 @@ package IOCTL is
    type File_Mode is new int;
    type Size is new Long_Integer;
 
-
-   function ioctl (File_Desc : in File_Id;
-                   req : in Request;
-                   point : in out System.Address)
-                   return int;
-   pragma import(C, ioctl, "ioctl");
-
-   -- TODO: On 32 Bit machines, this is a Unsigned_32 on
-   -- 64 bit machines, this is a Unsigned_64. Use conditional compilation.
-   Err_No : Unsigned_64;
+   -- FIXME: Is Errno on 64 Bit machines 32 Bit ot 64 Bit?
+   Err_No : Unsigned_32;
+   pragma Thread_Local_Storage (Err_No);
    pragma Import (C, Err_No, "errno");
 
-   function open(path : string;
-                 flags : int;
-                 mode : File_Mode)
-                 return File_Id;
+
+   function Ioctl (File_Desc : in File_Id;
+                   Req : in Request;
+                   Data : in out HAL.UInt8)
+                   return int;
+   pragma import(C, Ioctl, "ioctl");
+
+   function Open (Path : String;
+                  Flags : int;
+                  Mode : File_Mode)
+                  return File_Id;
    pragma import(C, open, "open");
 
-   function read(file : File_Id;
-                 b : in out System.Address;
-                 length : Size)
-                 return Size;
+   function Read (File_Desc : File_Id;
+                  Data : in out System.Address;
+                  Length : Size)
+                  return Size;
    pragma import(C, read, "read");
 
-   function write(file : File_Id;
-                  b : in out System.Address;
-                  length : Size)
-                  return Size;
+   function Write (File_Desc : File_Id;
+                   Data : in out System.Address;
+                   Length : Size)
+                   return Size;
    pragma import(C, write, "write");
 
 end IOCTL;

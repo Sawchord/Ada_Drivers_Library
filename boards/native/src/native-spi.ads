@@ -30,7 +30,7 @@
 ------------------------------------------------------------------------------
 
 
-with HAL;
+with HAL; use HAL;
 with HAL.SPI;
 with System;
 
@@ -39,9 +39,15 @@ with Ada.Strings.Bounded;
 with Interfaces;
 with IOCTL; use IOCTL;
 
+with Interfaces.C;
+
+-- TODO: Remove this after finishing Debuging
+with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+
 package Native.SPI is
 
-   type SPI_Port is limited new HAL.SPI.SPI_Port with private;
+   type SPI_Port is new HAL.SPI.SPI_Port with private;
 
    type SPI_Clock_Polarity is (High, Low);
 
@@ -52,14 +58,14 @@ package Native.SPI is
    package Device_String is new
      Ada.Strings.Bounded.Generic_Bounded_Length (Max => 80);
    type SPI_Configuration is record
-      Device : Device_String.Bounded_String;
       Data_Size : HAL.SPI.SPI_Data_Size;
       Clock_Polarity : SPI_Clock_Polarity;
       Clock_Phase : SPI_Clock_Phase;
-      Baud_Rate : HAL.UInt16;
+      Baud_Rate : Positive;
    end record;
 
-   function Configure (Conf : SPI_Configuration) return SPI_Port;
+   function Configure (Device : String;
+                       Conf : SPI_Configuration) return SPI_Port;
 
    overriding
    function Data_Size (This : SPI_Port) return HAL.SPI.SPI_Data_Size;
@@ -93,12 +99,12 @@ Timeout : Natural := 1000);
 
 private
 
-   type SPI_Port is limited new HAL.SPI.SPI_Port with record
+   type SPI_Port is new HAL.SPI.SPI_Port with record
       File_Desc : File_Id;
       Data_Size : HAL.SPI.SPI_Data_Size;
    end record;
 
-   SPI_MAGIC : HAL.UInt8 := HAL.Uint8'Value((1 => 'k')); -- from spidev.h
+   SPI_MAGIC : HAL.UInt8 := HAL.Uint8(107); -- from spidev.h (value of 'k')
 
    function SPI_MODE (dir : in Direction) return Request is
      (dir  => dir,
