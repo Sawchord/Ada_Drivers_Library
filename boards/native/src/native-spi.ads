@@ -64,6 +64,7 @@ package Native.SPI is
       Data_Size : HAL.SPI.SPI_Data_Size;
       Clock_Polarity : SPI_Clock_Polarity;
       Clock_Phase : SPI_Clock_Phase;
+      First_Bit : SPI_First_Bit;
       Baud_Rate : Positive;
    end record;
 
@@ -106,7 +107,7 @@ private
 
    type SPI_Port is new HAL.SPI.SPI_Port with record
       File_Desc : File_Id;
-      Data_Size : HAL.SPI.SPI_Data_Size;
+      Config : SPI_Configuration;
    end record;
 
    SPI_MAGIC : HAL.UInt8 := HAL.Uint8(107); -- from spidev.h (value of 'k')
@@ -115,6 +116,12 @@ private
      (dir  => dir,
       typ  => SPI_MAGIC,
       nr   => 1,	-- from spidev.h
+      size => 1);	-- from spidev.h (size of u8)
+
+   function SPI_LSB_FIRST (dir : in Direction) return Request is
+     (dir  => dir,
+      typ  => SPI_MAGIC,
+      nr   => 2,	-- from spidev.h
       size => 1);	-- from spidev.h (size of u8)
 
    function SPI_BITS_PER_WORD (dir : in Direction) return Request is

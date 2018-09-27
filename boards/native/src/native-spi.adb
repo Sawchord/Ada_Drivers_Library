@@ -25,7 +25,7 @@ package body Native.SPI is
 
       if (Integer(Err_No) /= 0) then
          Status := Err_Error;
-         return SPI_Port'(File_Desc => -1, Data_Size => Conf.Data_Size);
+         return SPI_Port'(File_Desc => -1, Config => Conf);
       end if;
 
       -- Set the mode of the SPI Device
@@ -33,14 +33,18 @@ package body Native.SPI is
          Mode : HAL.UInt8;
       begin
          case Conf.Clock_Phase is
-           when P1Edge => Mode := 0;
-           when P2Edge => Mode := 1;
+           when P1Edge => Mode := 2#0000#;
+           when P2Edge => Mode := 2#0001#;
          end case;
 
-         case Conf.Clock_Polarity is
-            when High => null;
-            when Low  => Mode := Mode or 2#10#;
-         end case;
+         if Conf.Clock_Polarity = Low then
+            Mode := Mode or 2#0010#;
+         end if;
+
+         -- NOTE: Many devices do not support LSB_First
+         if Conf.First_Bit = LSB then
+            Mode := Mode or 2#1000#;
+         end if;
 
          Ret := Ioctl (File, SPI_MODE(Write), Mode'Address);
 
@@ -48,12 +52,13 @@ package body Native.SPI is
 
       if Integer(Ret) /= 0 then
          Status := Err_Error;
-         return SPI_Port'(File_Desc => -1, Data_Size => Conf.Data_Size);
+         return SPI_Port'(File_Desc => -1, Config => Conf);
       end if;
 
+      -- Set Bits per Word
+      -- NOTE: Many devices (e.g. RPI) do not support 16 bits per word
+      -- We simulate 16 bits per word by transmitting 2 8 bit words.
       declare
-         -- NOTE: Many devices (e.g. RPI) do not support 16 bits per word
-         -- We simulate 16 bits per word by transmitting 2 8 bit words.
          BPW : HAL.UInt8 := 8;
       begin
          Ret := Ioctl (File, SPI_BITS_PER_WORD(Write), BPW'Address);
@@ -61,9 +66,11 @@ package body Native.SPI is
 
       if Integer(Ret) /= 0 then
          Status := Err_Error;
-         return SPI_Port'(File_Desc => -1, Data_Size => Conf.Data_Size);
+         return SPI_Port'(File_Desc => -1, Config => Conf);
       end if;
 
+      -- Set the Baudrate
+      -- NOTE: Untested
       declare
          Baud : HAL.Uint32 := HAL.UInt32(Conf.Baud_Rate);
       begin
@@ -72,17 +79,17 @@ package body Native.SPI is
 
       if Integer(Ret) /= 0 then
          Status := Err_Error;
-         return SPI_Port'(File_Desc => -1, Data_Size => Conf.Data_Size);
+         return SPI_Port'(File_Desc => -1, Config => Conf);
       end if;
 
       Status := HAL.SPI.Ok;
-      return SPI_Port'(File_Desc => File, Data_Size => Conf.Data_Size);
+      return SPI_Port'(File_Desc => File, Config => Conf);
    end Configure;
 
    overriding
    function Data_Size (This : SPI_Port) return HAL.SPI.SPI_Data_Size is
    begin
-      return This.Data_Size;
+      return This.Config.Data_Size;
    end Data_Size;
 
    overriding
