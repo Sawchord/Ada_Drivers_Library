@@ -43,8 +43,8 @@ package IOCTL is
       Write)
    with Size => 2;
    for Direction use
-     (None => 2#00#,
-      Read => 2#01#,
+     (None  => 2#00#,
+      Read  => 2#01#,
       Write => 2#10#);
 
    type Request is record
@@ -65,8 +65,12 @@ package IOCTL is
 
    type File_Id is new int;
    type File_Mode is new int;
+   type Size is new Long_Integer;
 
-   function ioctl (File_Desc : in File_Id; req : in Request; point : in out int)
+
+   function ioctl (File_Desc : in File_Id;
+                   req : in Request;
+                   point : in out System.Address)
                    return int;
    pragma import(C, ioctl, "ioctl");
 
@@ -75,8 +79,22 @@ package IOCTL is
    Err_No : Unsigned_64;
    pragma Import (C, Err_No, "errno");
 
-   function open(path : string; flags : int; mode : File_Mode ) return File_Id;
+   function open(path : string;
+                 flags : int;
+                 mode : File_Mode)
+                 return File_Id;
    pragma import(C, open, "open");
 
+   function read(file : File_Id;
+                 b : in out System.Address;
+                 length : Size)
+                 return Size;
+   pragma import(C, read, "read");
+
+   function write(file : File_Id;
+                  b : in out System.Address;
+                  length : Size)
+                  return Size;
+   pragma import(C, write, "write");
 
 end IOCTL;

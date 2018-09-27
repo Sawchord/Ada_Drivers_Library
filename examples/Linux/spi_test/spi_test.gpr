@@ -6,7 +6,7 @@ project Spi_Test is
    for Main use ("spi_test.adb");
    for Object_Dir use "obj";
    for Exec_Dir use "bin";
-   for Create_Missing_Dirs use "True";
+   --for Create_Missing_Dirs use "True";
 
    package Compiler is
       for Default_Switches ("ada") use ("-fstack-check", "-gnato", "-g");

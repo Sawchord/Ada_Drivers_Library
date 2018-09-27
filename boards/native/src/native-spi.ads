@@ -52,11 +52,11 @@ package Native.SPI is
    package Device_String is new
      Ada.Strings.Bounded.Generic_Bounded_Length (Max => 80);
    type SPI_Configuration is record
+      Device : Device_String.Bounded_String;
       Data_Size : HAL.SPI.SPI_Data_Size;
       Clock_Polarity : SPI_Clock_Polarity;
       Clock_Phase : SPI_Clock_Phase;
       Baud_Rate : HAL.UInt16;
-      Device : Device_String.Bounded_String;
    end record;
 
    function Configure (Conf : SPI_Configuration) return SPI_Port;
@@ -97,5 +97,25 @@ private
       File_Desc : File_Id;
       Data_Size : HAL.SPI.SPI_Data_Size;
    end record;
+
+   SPI_MAGIC : HAL.UInt8 := HAL.Uint8'Value((1 => 'k')); -- from spidev.h
+
+   function SPI_MODE (dir : in Direction) return Request is
+     (dir  => dir,
+      typ  => SPI_MAGIC,
+      nr   => 1,	-- from spidev.h
+      size => 1);	-- from spidev.h (size of u8)
+
+   function SPI_BITS_PER_WORD (dir : in Direction) return Request is
+     (dir  => dir,
+      typ  => SPI_MAGIC,
+      nr   => 3,	-- from spidev.h
+      size => 1);	-- deom spidev.h (size of u8)
+
+   function SPI_MAX_SPEED_HZ (dir : in Direction) return Request is
+     (dir  => dir,
+      typ  => SPI_MAGIC,
+      nr   => 4,	-- from spidev.h
+      size => 4);	-- from spidev.h (size of u32)
 
 end Native.Spi;
