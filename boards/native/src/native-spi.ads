@@ -33,6 +33,7 @@
 with HAL; use HAL;
 with HAL.SPI;
 with System;
+with System.Address_Image;
 
 with Ada.Strings.Bounded;
 

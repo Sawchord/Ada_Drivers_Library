@@ -39,13 +39,13 @@ package IOCTL is
 
    type Direction is
      (None,
-      Read,
-      Write)
+      Write,
+      Read)
    with Size => 2;
    for Direction use
      (None  => 2#00#,
-      Read  => 2#01#,
-      Write => 2#10#);
+      Write  => 2#01#,
+      Read => 2#10#);
 
    type Request is record
       dir: Direction;
@@ -53,15 +53,22 @@ package IOCTL is
       nr: HAL.UInt8;
       size: HAL.UInt14;
    end record
-   with Volatile_Full_Access, Size => 32,
+   with Size => 32,
    Bit_Order => System.Low_Order_First;
+   --for Request use record
+   --   dir at 0 range 0..1;
+   --   typ at 0 range 2..9;
+   --   nr at 0 range 10..17;
+   --   size at 0 range 18..31;
+   --end record;
+
    for Request use record
-      dir at 0 range 0..1;
-      typ at 0 range 2..9;
-      nr at 0 range 10..17;
-      size at 0 range 18..31;
+      dir at 0 range 30..31;
+      typ at 0 range 8..15;
+      nr at 0 range 0..7;
+      size at 0 range 16..29;
    end record;
-   pragma Pack (Request);
+   --pragma Pack (Request);
 
    type File_Id is new int;
    type File_Mode is new int;
@@ -73,11 +80,7 @@ package IOCTL is
    pragma Import (C, Err_No, "errno");
 
 
-   function Ioctl (File_Desc : in File_Id;
-                   Req : in Request;
-                   Data : in out HAL.UInt8)
-                   return int;
-   pragma import(C, Ioctl, "ioctl");
+
 
    function Open (Path : String;
                   Flags : int;

@@ -9,7 +9,14 @@ project Spi_Test is
    --for Create_Missing_Dirs use "True";
 
    package Compiler is
-      for Default_Switches ("ada") use ("-fstack-check", "-gnato", "-g");
+      for Default_Switches ("ada") use (
+                                        "-fstack-check",
+                                        "-gnato",
+                                        "-g",
+                                        -- Create a linker section for each function
+                                        "-ffunction-sections",
+                                        -- Create a linker section for each data
+                                        "-fdata-sections");
    end Compiler;
 
    --for Default_Switches ("ada") use Compiler'Default_Switches ("Ada") &
