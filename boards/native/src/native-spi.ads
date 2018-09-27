@@ -40,7 +40,7 @@ with Ada.Strings.Bounded;
 with Interfaces;
 with Interfaces.C; use Interfaces.C;
 
-with IOCTL; use IOCTL;
+with Posix; use Posix;
 
 with Ada.Unchecked_Conversion;
 

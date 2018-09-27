@@ -1,6 +1,6 @@
 
 with Text_IO; use Text_IO;
-with IOCTL;
+with Posix;
 
 with HAL;
 with HAL.SPI; use HAL.SPI;

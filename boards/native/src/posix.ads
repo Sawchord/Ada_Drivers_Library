@@ -35,7 +35,7 @@ with System;
 with Interfaces; use Interfaces;
 with Interfaces.C; use Interfaces.C;
 
-package IOCTL is
+package Posix is
 
    type Direction is
      (None,
@@ -89,4 +89,4 @@ package IOCTL is
                    return Size;
    pragma Import(C, write, "write");
 
-end IOCTL;
+end Posix;
