@@ -107,7 +107,6 @@ package body Native.SPI is
       Status : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
 
-      Data_Addr : System.Address;
       Ret : Size;
    begin
 
@@ -117,15 +116,14 @@ package body Native.SPI is
          return;
       end if;
 
-      Data_Addr := Data'Address;
+      Ret := Write (This.File_Desc, Data'Address, Data'Length);
 
-      Ret := Write (This.File_Desc, Data_Addr, Data'Size);
+      if Integer(ret) /= Data'Length then
+         Status := Err_Error;
+      else
+         Status := Ok;
+      end if;
 
-      Put_Line ("Value returned:");
-      Put (Integer(Ret), 2);
-      New_Line;
-
-      Status := Ok;
    end Transmit;
 
 
@@ -135,8 +133,25 @@ package body Native.SPI is
       Data   : HAL.SPI.SPI_Data_16b;
       Status : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
+
+      Ret : Size;
    begin
-      null;
+
+      -- Check if provided data matches configuration
+      if (This.Data_Size /= HAL.SPI.Data_Size_16b) then
+         Status := HAL.SPI.Err_Error;
+         return;
+      end if;
+
+      Ret := Write (This.File_Desc, Data'Address, Data'Length);
+
+      if Integer(ret) /= Data'Length then
+         Status := Err_Error;
+      else
+         Status := Ok;
+      end if;
+
+
    end Transmit;
 
    overriding
@@ -146,7 +161,13 @@ package body Native.SPI is
       Status  : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
    begin
-      null;
+
+      -- Check if provided data matches configuration
+      if (This.Data_Size /= HAL.SPI.Data_Size_8b) then
+         Status := HAL.SPI.Err_Error;
+         return;
+      end if;
+
    end Receive;
 
    procedure Receive
@@ -155,7 +176,13 @@ package body Native.SPI is
       Status  : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
    begin
-      null;
+
+      -- Check if provided data matches configuration
+      if (This.Data_Size /= HAL.SPI.Data_Size_16b) then
+         Status := HAL.SPI.Err_Error;
+         return;
+      end if;
+
    end Receive;
 
 

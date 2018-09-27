@@ -87,13 +87,13 @@ package IOCTL is
    pragma Import(C, open, "open");
 
    function Read (File_Desc : File_Id;
-                  Data : in out System.Address;
+                  Data : System.Address;
                   Length : Size)
                   return Size;
    pragma Import(C, read, "read");
 
    function Write (File_Desc : File_Id;
-                   Data : in out System.Address;
+                   Data : System.Address;
                    Length : Size)
                    return Size;
    pragma Import(C, write, "write");
