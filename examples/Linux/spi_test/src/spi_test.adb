@@ -10,8 +10,8 @@ procedure Spi_Test is
    Device : String := "/dev/spidev0.0";
    Conf : Native.SPI.SPI_Configuration :=
        (Data_Size      => HAL.SPI.Data_Size_16b,
-        Clock_Polarity => Native.SPI.Low,
-        Clock_Phase    => Native.SPI.P2Edge,
+        Clock_Polarity => Native.SPI.High,
+        Clock_Phase    => Native.SPI.P1Edge,
         Slave_Manager  => Native.SPI.Hardware_Managed,
         First_Bit      => Native.SPI.MSB,
         Baud_Rate      => 100_000);

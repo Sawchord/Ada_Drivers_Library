@@ -71,6 +71,13 @@ package Posix is
    pragma Thread_Local_Storage (Err_No);
    pragma Import (C, Err_No, "errno");
 
+   function Ioctl (File_Desc : in File_Id;
+                   Req       : in Request;
+                   Data      : in System.Address)
+                   return Interfaces.C.int;
+   pragma Import (C, Ioctl, "ioctl");
+   pragma Import_Function(Ioctl, Mechanism => Value);
+
    function Open (Path : String;
                   Flags : int;
                   Mode : File_Mode)

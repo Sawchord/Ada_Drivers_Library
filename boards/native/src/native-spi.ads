@@ -131,7 +131,8 @@ private
      (This : in out SPI_Port;
       Out_Data : out HAL.SPI.SPI_Data_16b;
       In_Data : in HAL.SPI.SPI_Data_16b;
-      Mode : Tranceive_Mode)
+      Mode : Tranceive_Mode;
+      Status : out HAL.SPI.SPI_Status)
      with Pre => Mode /= Transceive or Out_Data'Length = In_Data'Length;
 
    SPI_MAGIC : HAL.UInt8 := HAL.Uint8(107); -- from spidev.h (value of 'k')
@@ -140,7 +141,7 @@ private
      (dir => Write,
       typ => SPI_MAGIC,
       nr => 0,
-      size => HAL.UInt14(n * SPI_IOC_Transfer'Size));
+      size => HAL.UInt14(n * (SPI_IOC_Transfer'Size / 8) ));
 
    function SPI_MODE (dir : Direction) return Request is
      (dir  => dir,

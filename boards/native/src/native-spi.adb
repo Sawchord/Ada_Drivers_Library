@@ -8,15 +8,6 @@ package body Native.SPI is
       File : File_Id;
       Ret : Interfaces.C.int;
 
-      -- TODO: Move this function into IOCTL Package
-      -- When moving this inot IOCTL package, Error: invalid use of 'IOCTL'
-      -- is risen.
-      function Ioctl (File_Desc : in File_Id;
-                      Req       : in Request;
-                      Data      : in System.Address)
-                      return Interfaces.C.int;
-      pragma Import (C, Ioctl, "ioctl");
-      pragma Import_Function(Ioctl, Mechanism => Value);
    begin
 
       -- Open file
@@ -124,11 +115,12 @@ package body Native.SPI is
    overriding
    procedure Transmit
      (This   : in out SPI_Port;
-      Data   : HAL.SPI.SPI_Data_16b;
+      Data   : in HAL.SPI.SPI_Data_16b;
       Status : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
 
-      Ret : Size;
+      --Ret : Size;
+      Out_Data :HAL.SPI.SPI_Data_16b(0..0);
    begin
 
       -- TODO: This Function can only transmit in little endian.
@@ -139,13 +131,15 @@ package body Native.SPI is
          return;
       end if;
 
-      Ret := Write (This.File_Desc, Data'Address, 2 * Data'Length);
+      --Ret := Write (This.File_Desc, Data'Address, 2 * Data'Length);
 
-      if Integer(ret) /= 2 * Data'Length then
-         Status := Err_Error;
-      else
-         Status := Ok;
-      end if;
+      --if Integer(ret) /= 2 * Data'Length then
+      --   Status := Err_Error;
+      --else
+      --   Status := Ok;
+      --end if;
+
+      This.Transceive(Out_Data, Data, Transmit, Status);
 
    end Transmit;
 
@@ -176,7 +170,8 @@ package body Native.SPI is
      (This : in out SPI_Port;
       Out_Data : out HAL.SPI.SPI_Data_16b;
       In_Data : in HAL.SPI.SPI_Data_16b;
-      Mode : Tranceive_Mode) is
+      Mode : Tranceive_Mode;
+      Status : out HAL.SPI.SPI_Status) is
 
       Tx_Buf : HAL.UInt16 := 0;
       Rx_Buf : HAL.UInt16 := 0;
@@ -187,9 +182,19 @@ package body Native.SPI is
                                       Target => HAL.UInt64);
       pragma Warnings (On, "types for unchecked conversion have different sizes");
 
+      Loop_Begin : Integer;
+      Loop_End : Integer;
    begin
 
-      for I in 0..Out_Data'Length loop
+      if Mode = Transmit then
+         Loop_Begin := In_Data'First;
+         Loop_End := In_Data'Last;
+      else
+         Loop_Begin := Out_Data'First;
+         Loop_End := Out_Data'Last;
+      end if;
+
+      for I in Loop_Begin..Loop_End loop
 
          if Mode = Transmit or Mode = Transceive then
             Tx_Buf := In_Data(I);
@@ -208,11 +213,15 @@ package body Native.SPI is
                Rx_Nbits => 0,
                Pad => 0);
 
-            --Ret : Interfaces.C.int;
+            Ret : Interfaces.C.int;
          begin
-            --Ret := Ioctl (This.File_Desc, SPI_TRANSFER(1),
-            --              Transmission'Address);
-            null;
+            Ret := Ioctl (This.File_Desc, SPI_TRANSFER(1),
+                          Transmission'Address);
+
+            if Integer (Ret) /= 2 then
+               Status := Err_Error;
+               return;
+            end if;
          end;
 
          if Mode = Receive or Mode = Transceive then
