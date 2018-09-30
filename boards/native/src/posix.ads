@@ -78,6 +78,12 @@ package Posix is
    pragma Import (C, Ioctl, "ioctl");
    pragma Import_Function(Ioctl, Mechanism => Value);
 
+   function Simple_Ioctl (File_Desc : in File_Id;
+                   Req       : in HAL.UInt32;
+                   Data      : in HAL.UInt64)
+                   return Interfaces.C.int;
+   pragma Import (C, Simple_Ioctl, "ioctl");
+
    function Open (Path : String;
                   Flags : int;
                   Mode : File_Mode)

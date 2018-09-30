@@ -150,10 +150,11 @@ package body Native.SPI is
       Timeout : Natural := 1000) is
 
       --Ret : Size;
-      Out_Data :HAL.SPI.SPI_Data_16b(0..0);
+      Dummy_Data :HAL.SPI.SPI_Data_16b(0..0);
    begin
 
-      -- TODO: This Function can only transmit in little endian.
+      -- This Function can only transmit in little endian.
+      -- Is this the desired behaviour?
 
       -- Check if provided data matches configuration
       if (This.Data_Size /= HAL.SPI.Data_Size_16b) then
@@ -169,7 +170,7 @@ package body Native.SPI is
       --   Status := Ok;
       --end if;
 
-      This.Transceive(Out_Data, Data, Transmit, Status);
+      This.Transceive(Dummy_Data, Data, Transmit, Status);
 
    end Transmit;
 
@@ -260,6 +261,7 @@ package body Native.SPI is
 
       end loop;
 
+      Status := Ok;
    end Transceive;
 
 

@@ -49,14 +49,22 @@ package Native.I2C is
 
    type I2C_Port is new HAL.I2C.I2C_Port with private;
 
+   -- TODO: Check whether this is even supported by I2CDev
    type I2C_Acknowledgement is (Ack_Disable, Ack_Enable);
 
    type I2C_Addressing_Mode is
      (Addressing_Mode_7bit,
       Addressing_Mode_10bit);
 
+   type I2C_Device_Mode is
+     (I2C_Mode,
+      SMBusDevice_Mode,
+      SMBusHost_Mode);
+
    type I2C_Configuration is record
       Addressing_Mode : I2C_Addressing_Mode;
+      Ack : I2C_Acknowledgement;
+      Device_Mode : I2C_Device_Mode;
    end record;
 
    function Configure (Device : String;
@@ -107,5 +115,18 @@ private
       File_Desc : File_Id;
       Config : I2C_Configuration;
    end record;
+
+   -- These values originate from linux/i2c-dev.h
+   I2C_RETRIES     : constant HAL.UInt32 := 16#0701#;
+   I2C_TIMEOUT     : constant HAL.UInt32 := 16#0702#;
+   I2C_SLAVE       : constant HAL.UInt32 := 16#0703#;
+   I2C_SLAVE_FORCE : constant HAL.UInt32 := 16#0706#;
+   I2C_TENBIT      : constant HAL.UInt32 := 16#0704#;
+   I2C_FUNCS       : constant HAL.UInt32 := 16#0705#;
+   I2C_RDWR        : constant HAL.UInt32 := 16#0707#;
+   I2C_PEC         : constant HAL.UInt32 := 16#0708#;
+   I2C_SMBUS       : constant HAL.UInt32 := 16#0720#;
+
+
 
 end Native.I2C;

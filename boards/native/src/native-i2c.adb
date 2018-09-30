@@ -50,7 +50,19 @@ package body Native.I2C is
          return I2C_Port'(File_Desc => -1, Config => Conf);
       end if;
 
-      return I2C_Port'(File_Desc => 0, Config => Conf);
+      if Conf.Addressing_Mode = Addressing_Mode_10bit then
+         -- NOTE: As of now, 10-Bit mode seems not to be working
+         -- with many devices. Therefore we return Error, when
+         -- 10-Bit mode is issued, but still continue
+         Ret := Simple_Ioctl (File, I2C_TENBIT, 0);
+         Status := Err_Error;
+      end if;
+
+      -- TODO: Check up on SMBus mode and how to use it
+
+      Status := Ok;
+      return I2C_Port'(File_Desc => File, Config => Conf);
+
    end Configure;
 
    overriding
@@ -60,8 +72,27 @@ package body Native.I2C is
       Data    : HAL.I2C.I2C_Data;
       Status  : out HAL.I2C.I2C_Status;
       Timeout : Natural := 1000) is
+
+      Ret : Interfaces.C.int;
+      Size : Posix.Size;
    begin
-      null;
+
+      Ret := Simple_Ioctl (This.File_Desc, I2C_SLAVE, HAL.Uint64(Addr));
+
+      if Ret /= 0 then
+         Put_Line ("Error while setting address");
+         Status := Err_Error;
+         return;
+      end if;
+
+      Size := Write (This.File_Desc, Data'Address, Data'Length);
+
+      if Size /= Data'Length then
+         Put_Line ("Error while transmitting Data");
+         Status := Err_Error;
+      end if;
+
+      Status := Ok;
    end Master_Transmit;
 
 
