@@ -6,6 +6,8 @@ with HAL;
 with HAL.SPI; use HAL.SPI;
 with Native.SPI; -- use Native.SPI;
 
+with Native.I2C;
+
 procedure Spi_Test is
    Device : String := "/dev/spidev0.0";
    Conf : Native.SPI.SPI_Configuration :=

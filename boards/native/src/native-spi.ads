@@ -35,8 +35,6 @@ with HAL.SPI; use HAL.SPI;
 with System;
 with System.Address_Image;
 
-with Ada.Strings.Bounded;
-
 with Interfaces;
 with Interfaces.C; use Interfaces.C;
 
