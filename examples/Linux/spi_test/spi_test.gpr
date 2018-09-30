@@ -6,17 +6,20 @@ project Spi_Test is
    for Main use ("spi_test.adb");
    for Object_Dir use "obj";
    for Exec_Dir use "bin";
-   --for Create_Missing_Dirs use "True";
+   --for Create_Missing_Dirs use "True"; -- This is not known to GNAT-6
+
+   package Builder is
+      for Switches (others) use ("-j0");
+   end Builder;
 
    package Compiler is
       for Default_Switches ("ada") use (
                                         "-fstack-check",
                                         "-gnato",
                                         "-g",
-                                        -- Create a linker section for each function
-                                        "-ffunction-sections",
-                                        -- Create a linker section for each data
-                                        "-fdata-sections");
+                                        "-gnatw.X", -- Disable warnings for No_Exception_Propagation
+                                        "-ffunction-sections", -- Create a linker section for each function
+                                        "-fdata-sections"); -- Create a linker section for each data
    end Compiler;
 
    --for Default_Switches ("ada") use Compiler'Default_Switches ("Ada") &
