@@ -124,7 +124,7 @@ private
    end record;
 
    type Tranceive_Mode is (Transmit, Receive, Transceive);
-   -- TODO: Add transceive function using the IOCTL call
+
    procedure Transceive
      (This : in out SPI_Port;
       Out_Data : out HAL.SPI.SPI_Data_16b;

@@ -85,7 +85,7 @@ package body Native.SPI is
          Ret := Ioctl (File, SPI_BITS_PER_WORD(Write), BPW'Address);
       end;
 
-      if Integer(Ret) /= 0 then
+      if Integer (Ret) /= 0 then
          Status := Err_Error;
          return SPI_Port'(File_Desc => -1, Config => Conf);
       end if;
@@ -98,7 +98,7 @@ package body Native.SPI is
          Ret := Ioctl (File, SPI_MAX_SPEED_HZ(Write), Baud'Address);
       end;
 
-      if Integer(Ret) /= 0 then
+      if Integer (Ret) /= 0 then
          Status := Err_Error;
          return SPI_Port'(File_Desc => -1, Config => Conf);
       end if;
@@ -133,7 +133,7 @@ package body Native.SPI is
 
       Ret := Write (This.File_Desc, Data'Address, Data'Length);
 
-      if Integer(ret) /= Data'Length then
+      if Integer (ret) /= Data'Length then
          Status := Err_Error;
       else
          Status := Ok;
@@ -149,8 +149,7 @@ package body Native.SPI is
       Status : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
 
-      --Ret : Size;
-      Dummy_Data :HAL.SPI.SPI_Data_16b(0..0);
+      Ret : Size;
    begin
 
       -- This Function can only transmit in little endian.
@@ -162,15 +161,13 @@ package body Native.SPI is
          return;
       end if;
 
-      --Ret := Write (This.File_Desc, Data'Address, 2 * Data'Length);
+      Ret := Write (This.File_Desc, Data'Address, 2 * Data'Length);
 
-      --if Integer(ret) /= 2 * Data'Length then
-      --   Status := Err_Error;
-      --else
-      --   Status := Ok;
-      --end if;
-
-      This.Transceive(Dummy_Data, Data, Transmit, Status);
+      if Integer (ret) /= 2 * Data'Length then
+         Status := Err_Error;
+      else
+         Status := Ok;
+      end if;
 
    end Transmit;
 
@@ -180,9 +177,22 @@ package body Native.SPI is
       Data    : out HAL.SPI.SPI_Data_8b;
       Status  : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
+
+      Ret : Size;
    begin
 
-      null;
+      if (This.Data_Size /= HAL.SPI.Data_Size_8b) then
+         Status := HAL.SPI.Err_Error;
+         return;
+      end if;
+
+      Ret := Read (This.File_Desc, Data'Address, Data'Length);
+
+      if Integer (ret) /= Data'Length then
+         Status := Err_Error;
+      else
+         Status := Ok;
+      end if;
 
    end Receive;
 
@@ -191,11 +201,27 @@ package body Native.SPI is
       Data    : out HAL.SPI.SPI_Data_16b;
       Status  : out HAL.SPI.SPI_Status;
       Timeout : Natural := 1000) is
+
+      Ret : Size;
    begin
 
-      null;
+      if (This.Data_Size /= HAL.SPI.Data_Size_16b) then
+         Status := HAL.SPI.Err_Error;
+         return;
+      end if;
+
+      Ret := Read (This.File_Desc, Data'Address, 2 * Data'Length);
+
+      if Integer (ret) /= 2 * Data'Length then
+         Status := Err_Error;
+      else
+         Status := Ok;
+      end if;
 
    end Receive;
+
+
+   -- private functions
 
    procedure Transceive
      (This : in out SPI_Port;
