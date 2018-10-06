@@ -7,9 +7,11 @@ with Interfaces; use Interfaces;
 
 package BMP280 is
 
+   -- TODO: Abstract Port to also support
+   -- I2C interface Both addresses and 3Wire
    type BMP280_Device (Port: Any_SPI_Port;
                        Cs: Any_GPIO_Point;
-                       Time : not null HAL.Time.Any_Delays) is private;
+                       Time : not null HAL.Time.Any_Delays);-- is private;
 
    type BMP280_Values_Int is record
       Temperature : Integer_32;
@@ -17,8 +19,8 @@ package BMP280 is
    end record;
 
    type BMP280_Values_Float is record
-         Temperature : Float;
-         Pressure : Float;
+      Temperature : Float;
+      Pressure : Float;
    end record;
 
    type BMP280_Oversampling_Rate is (Skip, x1, x2, x4, x8, x16)
@@ -61,54 +63,72 @@ package BMP280 is
    procedure Read_Values_Float (This : BMP280_Device;
                                 Values : BMP280_Values_Float);
 
-private
+--private
 
-   BMP280_Device_Id : constant Uint16 := 16#58#;
-   BMP280_Reset_Magic : constant Uint16 := 16#B6#;
+   Type Byte_Array is Array (Positive Range <>) of UInt8
+     with Alignment => 2;
+   generic
+      type REC is private;
+   function Convert_To_Rec(Input : Byte_Array) return REC;
+   generic
+      type REC is private;
+   function Convert_From_Rec (Input : REC) return Byte_Array;
 
-   type Power_Mode is (Sleep, Force, Normal)
+
+   BMP280_Device_Id : constant Uint8 := 16#58#;
+   BMP280_Reset_Magic : constant Uint8 := 16#B6#;
+
+   BMP280_Calibration_Address : constant UInt8 := 16#88#;
+   BMP280_Device_Id_Address : constant UInt8 := 16#D0#;
+   BMP280_Reset_Address : constant Uint8 := 16#E0#;
+   BMP280_Status_Address : constant UInt8 := 16#F3#;
+   BMP280_Control_Address : constant UInt8 := 16#F4#;
+   BMP280_Config_Address : constant UInt8 := 16#F5#;
+   BMP280_Readout_Address : constant Uint8 := 16#F7#;
+
+   type BMP280_Power_Mode is (Sleep, Force, Normal)
    with Size => 2;
-   for Power_Mode use (Sleep  => 2#00#,
+   for BMP280_Power_Mode use (Sleep  => 2#00#,
                        Force  => 2#01#,
                        Normal => 2#11#);
 
 
-   type Config is record
-      t_sb  : UInt3;
+   type BMP280_Config is record
+      t_sb  : BMP280_Standby_Time;
       filter : Uint3;
       spi3w : Boolean;
    end record
      with Size => 8;
-   for Config use record
+   for BMP280_Config use record
       t_sb   at 0 range 0..2;
       filter at 0 range 3..5; -- TODO: Check if it is ok, to leave out a bit
       spi3w  at 0 range 7..7;
    end record;
 
-   type Control is record
+   type BMP280_Control is record
       osrs_t : BMP280_Oversampling_Rate;
       osrs_p : BMP280_Oversampling_Rate;
-      mode : Power_Mode;
+      mode : BMP280_Power_Mode;
    end record
      with Size => 8;
-   for Control use record
+   for BMP280_Control use record
       osrs_t at 0 range 0..2;
       osrs_p at 0 range 3..5;
       mode   at 0 range 6..7;
    end record;
 
-   type Status is record
+   type BMP280_Status is record
       measuring : Boolean;
       im_update : Boolean;
    end record
      with Size => 8;
-   for Status use record
+   for BMP280_Status use record
       measuring at 0 range 4..4;
       im_update at 0 range 7..7;
    end record;
 
    -- See BMP280 Reference Manual
-   type Calibration is record
+   type BMP280_Calibration is record
       dig_T1 : Unsigned_16;
       dig_T2 : Integer_16;
       dig_T3 : Integer_16;
@@ -120,29 +140,40 @@ private
       dig_P8 : Integer_16;
       dig_P9 : Integer_16;
    end record;
-   pragma Pack(Calibration);
+   pragma Pack(BMP280_Calibration);
+   function Convert (Input : Byte_Array) return BMP280_Calibration;
+   --function Convert is new Convert_To_Rec (BMP280_Calibration);
 
-   type Raw_Readout is record
+   type BMP280_Raw_Readout is record
       Pressure : Uint20;
       Reserved_20_23 : UInt4;
       Temperature : UInt20;
       Reserved_44_47 : UInt4;
    end record
      with Size => 48;
-   for Raw_Readout use record -- TODO : Check LSB issues
+   for BMP280_Raw_Readout use record -- TODO : Check LSB issues
       Pressure       at 16#0# range 0..19;
       Reserved_20_23 at 16#0# range 20..23;
       Temperature    at 16#3# range 0..19;
       Reserved_44_47 at 16#3# range 20..23;
    end record;
-
+   --function Convert (Input : Byte_Array) return BMP280_Raw_Readout;
+   function Convert is new Convert_To_Rec (BMP280_Raw_Readout);
 
    type BMP280_Device (Port: Any_SPI_Port;
                        Cs: Any_GPIO_Point;
                        Time : not null HAL.Time.Any_Delays) is record
-      Cal : Calibration;
+      Cal : BMP280_Calibration;
+      Raw : BMP280_Raw_Readout;
    end record;
 
 
+   procedure Read_Port (This : BMP280_Device;
+                   Address : UInt8;
+                   Data : out Byte_Array);
+
+   procedure Write_Port (This : BMP280_Device;
+                    Address : UInt8;
+                    Data : UInt8);
 
 end BMP280;
