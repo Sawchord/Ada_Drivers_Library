@@ -3,6 +3,8 @@ with HAL.SPI; use HAL.SPI;
 with HAL.GPIO; use HAL.GPIO;
 with HAL.Time;
 
+with Ada.Unchecked_Conversion;
+
 with Interfaces; use Interfaces;
 
 package BMP280 is
@@ -54,7 +56,7 @@ package BMP280 is
    end record;
 
 
-   procedure Configure (This : BMP280_Device;
+   procedure Configure (This : in out BMP280_Device;
                         Configuration : BMP280_Configuration);
 
    procedure Read_Values_Int (This : BMP280_Device;
@@ -67,13 +69,6 @@ package BMP280 is
 
    Type Byte_Array is Array (Positive Range <>) of UInt8
      with Alignment => 2;
-   generic
-      type REC is private;
-   function Convert_To_Rec(Input : Byte_Array) return REC;
-   generic
-      type REC is private;
-   function Convert_From_Rec (Input : REC) return Byte_Array;
-
 
    BMP280_Device_Id : constant Uint8 := 16#58#;
    BMP280_Reset_Magic : constant Uint8 := 16#B6#;
@@ -132,17 +127,18 @@ package BMP280 is
       dig_T1 : Unsigned_16;
       dig_T2 : Integer_16;
       dig_T3 : Integer_16;
-      dig_P3 : Unsigned_16;
+      dig_P1 : Unsigned_16;
+      dig_P2 : Integer_16;
+      dig_P3 : Integer_16;
       dig_P4 : Integer_16;
       dig_P5 : Integer_16;
       dig_P6 : Integer_16;
       dig_P7 : Integer_16;
       dig_P8 : Integer_16;
       dig_P9 : Integer_16;
-   end record;
+   end record
+     with Size => 192;
    pragma Pack(BMP280_Calibration);
-   function Convert (Input : Byte_Array) return BMP280_Calibration;
-   --function Convert is new Convert_To_Rec (BMP280_Calibration);
 
    type BMP280_Raw_Readout is record
       Pressure : Uint20;
@@ -157,8 +153,6 @@ package BMP280 is
       Temperature    at 16#3# range 0..19;
       Reserved_44_47 at 16#3# range 20..23;
    end record;
-   --function Convert (Input : Byte_Array) return BMP280_Raw_Readout;
-   function Convert is new Convert_To_Rec (BMP280_Raw_Readout);
 
    type BMP280_Device (Port: Any_SPI_Port;
                        Cs: Any_GPIO_Point;

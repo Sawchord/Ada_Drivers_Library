@@ -1,25 +1,46 @@
 package body BMP280 is
 
    -- TODO: Introduce Status Value
-   procedure Configure (This : BMP280_Device;
+   procedure Configure (This : in out BMP280_Device;
                         Configuration : BMP280_Configuration) is
-      Data : Byte_Array(1..1);
+
+      function Config_To_UInt8 is new
+        Ada.Unchecked_Conversion (Source => BMP280_Config,
+                                  Target => UInt8);
+
+      function Control_To_UInt8 is new
+        Ada.Unchecked_Conversion (Source => BMP280_Control,
+                                  Target => UInt8);
+
+      function To_Calibration is new
+        Ada.Unchecked_Conversion (Source => Byte_Array,
+                                  Target => BMP280_Calibration);
+
+      D_Id : Byte_Array(1..1);
       Config : BMP280_Config;
       Control : BMP280_Control;
+      C_Data : Byte_Array(1..BMP280_Calibration'Size/8);
    begin
 
       -- Check the Device Id
-      Read_Port (This, BMP280_Device_Id_Address, Data);
-      if Data(1) /= BMP280_Device_Id then
+      Read_Port (This, BMP280_Device_Id_Address, D_Id);
+      if D_Id(1) /= BMP280_Device_Id then
          return;
       end if;
 
       Config := (t_sb => Configuration.Standby_Time,
                  filter => Configuration.Filter_Coefficient,
                  spi3w => False);
+      Write_Port (This, BMP280_Config_Address, Config_To_Uint8(Config));
 
-      --Write_Port (This, BMP280_Config_Address, UInt8(Config));
+      Control := (osrs_t => Configuration.Temperature_Oversampling,
+                  osrs_p => Configuration.Pressure_Oversampling,
+                  mode => Normal);
+      Write_Port (This, BMP280_Control_Address, Control_To_Uint8(Control));
 
+      -- Read the Calibration Data
+      Read_Port (This, BMP280_Calibration_Address, C_Data);
+      This.Cal := To_Calibration(C_Data);
    end Configure;
 
    procedure Read_Values_Int (This : BMP280_Device;
@@ -33,40 +54,6 @@ package body BMP280 is
    begin
       null;
    end Read_Values_Float;
-
-   function Convert_To_Rec(Input : Byte_Array) return REC is
-      Result : REC with
-        Import, Convention => Ada, Address => Input'Address;
-   begin
-      Return Result;
-   end Convert_To_Rec;
-
-   function Convert_From_Rec(Input : REC) return Byte_Array is
-      Result : Constant Byte_Array(1..REC'Size);
-      for Result'Address use Input'Address;
-      pragma Import( Convention => Ada, Entity => Result );
-   begin
-      Return Result;
-   end Convert_From_Rec;
-
-   function Convert (Input : Byte_Array) return BMP280_Calibration is new Convert_To_Rec (BMP280_Calibration);
-
-   -- TODO: Use generics
-   --function Convert(Input : Byte_Array) return BMP280_Calibration is
-   --   Result : BMP280_Calibration with
-   --     Import, Convention => Ada, Address => Input'Address;
-   --begin
-   --   Return Result;
-   --end Convert;
-
-   --function Convert(Input : Byte_Array) return BMP280_Raw_Readout is
-   --   Result : BMP280_Raw_Readout with
-   --     Import, Convention => Ada, Address => Input'Address;
-   --begin
-   --   Return Result;
-   --end Convert;
-
-
 
    procedure Read_Port (This : BMP280_Device;
                    Address : UInt8;
