@@ -3,8 +3,6 @@ with HAL.SPI; use HAL.SPI;
 with HAL.GPIO; use HAL.GPIO;
 with HAL.Time;
 
-with Ada.Unchecked_Conversion;
-
 with Interfaces; use Interfaces;
 
 package BMP280 is
@@ -95,9 +93,9 @@ package BMP280 is
    end record
      with Size => 8;
    for BMP280_Config use record
-      t_sb   at 0 range 0..2;
-      filter at 0 range 3..5; -- TODO: Check if it is ok, to leave out a bit
-      spi3w  at 0 range 7..7;
+      t_sb   at 0 range 5..7;
+      filter at 0 range 2..4; -- TODO: Check if it is ok, to leave out a bit
+      spi3w  at 0 range 0..0;
    end record;
 
    type BMP280_Control is record
@@ -107,9 +105,9 @@ package BMP280 is
    end record
      with Size => 8;
    for BMP280_Control use record
-      osrs_t at 0 range 0..2;
-      osrs_p at 0 range 3..5;
-      mode   at 0 range 6..7;
+      osrs_t at 0 range 5..7;
+      osrs_p at 0 range 2..4;
+      mode   at 0 range 0..1;
    end record;
 
    type BMP280_Status is record
@@ -142,9 +140,9 @@ package BMP280 is
 
    type BMP280_Raw_Readout is record
       Pressure : Uint20;
-      Reserved_20_23 : UInt4;
+      Reserved_20_23 : UInt4 := 0;
       Temperature : UInt20;
-      Reserved_44_47 : UInt4;
+      Reserved_44_47 : UInt4 := 0;
    end record
      with Size => 48;
    for BMP280_Raw_Readout use record -- TODO : Check LSB issues

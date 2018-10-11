@@ -1,5 +1,7 @@
-package body BMP280 is
+with Ada.Unchecked_Conversion;
 
+
+package body BMP280 is
    -- TODO: Introduce Status Value
    procedure Configure (This : in out BMP280_Device;
                         Configuration : BMP280_Configuration) is
@@ -83,7 +85,7 @@ package body BMP280 is
 
       Read_Values_Int(This, Int_Values);
 
-      Values.Temperature := Float(Int_Values.Temperature) / 10.0;
+      Values.Temperature := Float(Int_Values.Temperature) / 100.0;
       Values.Pressure := Float(Int_Values.Pressure) / 256.0;
 
    end Read_Values_Float;
@@ -100,7 +102,7 @@ package body BMP280 is
                                                     Target => Unsigned_32);
       function Shr (i : Integer_32; v : Integer) return Integer_32 is
       begin
-         return U2I(Shift_Right(I2U(i), v));
+         return U2I(Shift_Right_Arithmetic(I2U(i), v));
       end Shr;
       function Shl (i : Integer_32; v : Integer) return Integer_32 is
       begin
@@ -108,19 +110,19 @@ package body BMP280 is
       end Shl;
 
       T : Integer_32;
-      var1, var2 : Integer_32;
+      var1, var2, var3, var4 : Integer_32;
    begin
 
       T := Integer_32(Readout.Temperature);
-      var1 := Shr(
-                  (Shr(T, 3) - Shl(Integer_32(This.Cal.dig_T1), 1))
-                  * Integer_32(This.Cal.dig_T2), 11);
 
-      var2 := Shr(
-        Shr(Shr(T, 4) - Integer_32(This.Cal.dig_T1)**2, 12)
-        * Integer_32(This.Cal.dig_T3), 14);
+      var1 := Shr(T, 3) - Shl(Integer_32(This.Cal.dig_T1), 1);
+      var2 := Shr(var1 * Integer_32(This.Cal.dig_T2), 11);
 
-      return Shr((var1 + var2) * 5 + 128, 8);
+      var3 := (Shr(T, 4) - Integer_32(This.Cal.dig_T1))**2;
+      var4 := Shr(Shr(var3, 12) * Integer_32(This.Cal.dig_T3), 14);
+
+      return Shr((var2 + var4) * 5 + 128, 8);
+
    end Compensate_Temperature;
 
 
