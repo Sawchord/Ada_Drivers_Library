@@ -60,10 +60,10 @@ package BMP280 is
                         Configuration : BMP280_Configuration);
 
    procedure Read_Values_Int (This : BMP280_Device;
-                              Value : BMP280_Values_Int);
+                              Value : out BMP280_Values_Int);
 
    procedure Read_Values_Float (This : BMP280_Device;
-                                Values : BMP280_Values_Float);
+                                Values : out BMP280_Values_Float);
 
 --private
 
@@ -160,6 +160,13 @@ package BMP280 is
       Cal : BMP280_Calibration;
       Raw : BMP280_Raw_Readout;
    end record;
+
+
+   function Compensate_Temperature (This : BMP280_Device;
+                                    Readout : BMP280_Raw_Readout)
+                                    return Integer_32;
+
+
 
 
    procedure Read_Port (This : BMP280_Device;

@@ -203,7 +203,7 @@ procedure Demo_BMP280 is
 
    IData : SPI_Data_8b := (16#D0#, 0);
 
-   Status2 : SPI_Status;
+   --Status2 : SPI_Status;
 begin
 
    Initialize_UART;
@@ -220,8 +220,8 @@ begin
    declare
       Conf : BMP280_Configuration :=
         (Standby_Time => ms125,
-         Temperature_Oversampling => x1,
-         Pressure_Oversampling => x1,
+         Temperature_Oversampling => x16,
+         Pressure_Oversampling => x16,
          Filter_Coefficient => 1);
    begin
       Configure(Sensor, Conf);
@@ -229,9 +229,16 @@ begin
 
    loop
 
-      Cs_Pin.Clear;
-      SPI_1.Transmit(IData, Status2);
-      Cs_Pin.Set;
+      --Cs_Pin.Clear;
+      --SPI_1.Transmit(IData, Status2);
+      --Cs_Pin.Set;
+
+      declare
+         Values : BMP280_Values_Float;
+      begin
+         Read_Values_Float(Sensor, Values);
+         Put_Line("Temperature: " & Values.Temperature'Img);
+      end;
 
       Put_Line ("Hello  " & Count'Img);
       Count := Count + 1;

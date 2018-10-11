@@ -39,21 +39,90 @@ package body BMP280 is
       Write_Port (This, BMP280_Control_Address, Control_To_Uint8(Control));
 
       -- Read the Calibration Data
-      Read_Port (This, BMP280_Calibration_Address, C_Data);
+      Read_Port(This, BMP280_Calibration_Address, C_Data);
       This.Cal := To_Calibration(C_Data);
    end Configure;
 
    procedure Read_Values_Int (This : BMP280_Device;
-                               Value : BMP280_Values_Int) is
+                              Value : out BMP280_Values_Int) is
+
+      --function To_Readout is new Ada.Unchecked_Conversion(Source => Byte_Array,
+      --                                                    Target => BMP280_Raw_Readout);
+
+      function To_Readout (C_Data : Byte_Array) return BMP280_Raw_Readout is
+      begin
+         return BMP280_Raw_Readout'(Temperature => UInt20(
+                                    Shift_Left(Unsigned_32(C_Data(4)), 12)
+                                    or Shift_Left(Unsigned_32(C_Data(5)), 4)
+                                    or Shift_Right(Unsigned_32(C_Data(6)), 4)),
+                                    Reserved_20_23 => 0,
+                                    Pressure => UInt20(
+                                      Shift_Left(Unsigned_32(C_Data(1)), 12)
+                                      or Shift_Left(Unsigned_32(C_Data(2)), 4)
+                                      or Shift_Right(Unsigned_32(C_Data(3)), 4)),
+                                    Reserved_44_47 => 0);
+      end To_Readout;
+
+      Readout : BMP280_Raw_Readout;
+      C_Data : Byte_Array(1..BMP280_Raw_Readout'Size/8);
    begin
-      null;
+
+      Read_Port(This, BMP280_Readout_Address, C_Data);
+      Readout := To_Readout(C_Data);
+      Value.Temperature := Compensate_Temperature(This, Readout);
+      Value.Pressure := 0;
+
    end Read_Values_Int;
 
+
    procedure Read_Values_Float (This : BMP280_Device;
-                                Values : BMP280_Values_Float) is
+                                Values : out BMP280_Values_Float) is
+
+      Int_Values : BMP280_Values_Int;
    begin
-      null;
+
+      Read_Values_Int(This, Int_Values);
+
+      Values.Temperature := Float(Int_Values.Temperature) / 10.0;
+      Values.Pressure := Float(Int_Values.Pressure) / 256.0;
+
    end Read_Values_Float;
+
+
+
+   function Compensate_Temperature (This : BMP280_Device;
+                                    Readout : BMP280_Raw_Readout)
+                                    return Integer_32 is
+
+      function U2I is new Ada.Unchecked_Conversion (Source => Unsigned_32,
+                                                    Target => Integer_32);
+      function I2U is new Ada.Unchecked_Conversion (Source => Integer_32,
+                                                    Target => Unsigned_32);
+      function Shr (i : Integer_32; v : Integer) return Integer_32 is
+      begin
+         return U2I(Shift_Right(I2U(i), v));
+      end Shr;
+      function Shl (i : Integer_32; v : Integer) return Integer_32 is
+      begin
+         return U2I(Shift_Left(I2U(i), v));
+      end Shl;
+
+      T : Integer_32;
+      var1, var2 : Integer_32;
+   begin
+
+      T := Integer_32(Readout.Temperature);
+      var1 := Shr(
+                  (Shr(T, 3) - Shl(Integer_32(This.Cal.dig_T1), 1))
+                  * Integer_32(This.Cal.dig_T2), 11);
+
+      var2 := Shr(
+        Shr(Shr(T, 4) - Integer_32(This.Cal.dig_T1)**2, 12)
+        * Integer_32(This.Cal.dig_T3), 14);
+
+      return Shr((var1 + var2) * 5 + 128, 8);
+   end Compensate_Temperature;
+
 
    procedure Read_Port (This : BMP280_Device;
                    Address : UInt8;
