@@ -72,7 +72,7 @@ package body BMP280 is
       Read_Port(This, BMP280_Readout_Address, C_Data);
       Readout := To_Readout(C_Data);
       Value.Temperature := Compensate_Temperature(This, Readout);
-      Value.Pressure := 0;
+      Value.Pressure := Compensate_Pressure(This, Readout, Value.Temperature);
 
    end Read_Values_Int;
 
@@ -110,20 +110,70 @@ package body BMP280 is
       end Shl;
 
       T : Integer_32;
-      var1, var2, var3, var4 : Integer_32;
+      var1, var2 : Integer_32;
    begin
 
       T := Integer_32(Readout.Temperature);
 
       var1 := Shr(T, 3) - Shl(Integer_32(This.Cal.dig_T1), 1);
-      var2 := Shr(var1 * Integer_32(This.Cal.dig_T2), 11);
+      var1 := Shr(var1 * Integer_32(This.Cal.dig_T2), 11);
 
-      var3 := (Shr(T, 4) - Integer_32(This.Cal.dig_T1))**2;
-      var4 := Shr(Shr(var3, 12) * Integer_32(This.Cal.dig_T3), 14);
+      var2 := (Shr(T, 4) - Integer_32(This.Cal.dig_T1))**2;
+      var2 := Shr(Shr(var2, 12) * Integer_32(This.Cal.dig_T3), 14);
 
-      return Shr((var2 + var4) * 5 + 128, 8);
+      return Shr((var1 + var2) * 5 + 128, 8);
 
    end Compensate_Temperature;
+
+   function Compensate_Pressure (This : BMP280_Device;
+                                 Readout : BMP280_Raw_Readout;
+                                 Temperature : Integer_32)
+                                 return Integer_64 is
+      function U2I is new Ada.Unchecked_Conversion (Source => Unsigned_64,
+                                                    Target => Integer_64);
+      function I2U is new Ada.Unchecked_Conversion (Source => Integer_64,
+                                                    Target => Unsigned_64);
+      function Shr (i : Integer_64; v : Integer) return Integer_64 is
+      begin
+         return U2I(Shift_Right_Arithmetic(I2U(i), v));
+      end Shr;
+      function Shl (i : Integer_64; v : Integer) return Integer_64 is
+      begin
+         return U2I(Shift_Left(I2U(i), v));
+      end Shl;
+
+      P : Integer_64;
+      var1, var2 : Integer_64;
+      t_fine : Integer_64;
+   begin
+
+      P := Integer_64(Readout.Pressure);
+      t_fine := (Shl(Integer_64(Temperature), 8) - 128 ) / 5;
+
+      var1 := t_fine - 128000;
+      var2 := (var1**2) * Integer_64(This.Cal.dig_P6);
+      var2 := var2 + Shl(var1 * Integer_64(This.Cal.dig_P5), 17);
+      var2 := var2 + Shl(Integer_64(This.Cal.dig_P4), 35);
+
+      var1 := Shr((var1**2) * Integer_64(This.Cal.dig_P3), 8)
+        + Shl(var1 * Integer_64(This.Cal.dig_P2), 12);
+      var1 := Shr((Shl(Integer_64(1), 47) + var1)
+                  * Integer_64(This.Cal.dig_P1), 33);
+
+      if var1 = 0 then
+         return 0;
+      end if;
+
+      p := 1048576 - p;
+      p := ((Shl(p, 31) - var2) * 3125) / var1;
+
+      var1 := Shr(Integer_64(This.Cal.dig_P9) * (Shr(p, 13)**2), 25);
+      var2 := Shr(Integer_64(This.Cal.dig_P8) * p, 19);
+
+      p := Shr(p + var1 + var2, 8) + Shl(Integer_64(This.Cal.dig_P7), 4);
+
+      return p;
+   end Compensate_Pressure;
 
 
    procedure Read_Port (This : BMP280_Device;

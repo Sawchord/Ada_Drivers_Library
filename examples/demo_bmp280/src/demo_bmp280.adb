@@ -220,8 +220,8 @@ begin
    declare
       Conf : BMP280_Configuration :=
         (Standby_Time => ms125,
-         Temperature_Oversampling => x16,
-         Pressure_Oversampling => x16,
+         Temperature_Oversampling => Skip,
+         Pressure_Oversampling => Skip,
          Filter_Coefficient => 1);
    begin
       Configure(Sensor, Conf);
@@ -238,6 +238,7 @@ begin
       begin
          Read_Values_Float(Sensor, Values);
          Put_Line("Temperature: " & Values.Temperature'Img);
+         Put_Line("Pressure: " & Values.Pressure'Img);
       end;
 
       Put_Line ("Hello  " & Count'Img);

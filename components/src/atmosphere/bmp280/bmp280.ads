@@ -164,7 +164,10 @@ package BMP280 is
                                     Readout : BMP280_Raw_Readout)
                                     return Integer_32;
 
-
+   function Compensate_Pressure (This : BMP280_Device;
+                                 Readout : BMP280_Raw_Readout;
+                                 Temperature : Integer_32)
+                                 return Integer_64;
 
 
    procedure Read_Port (This : BMP280_Device;
