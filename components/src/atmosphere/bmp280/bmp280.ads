@@ -11,7 +11,7 @@ package BMP280 is
    -- I2C interface Both addresses and 3Wire
    type BMP280_Device (Port: Any_SPI_Port;
                        Cs: Any_GPIO_Point;
-                       Time : not null HAL.Time.Any_Delays);-- is private;
+                       Time : not null HAL.Time.Any_Delays) is tagged limited private;
 
    type BMP280_Values_Int is record
       Temperature : Integer_32;
@@ -63,7 +63,7 @@ package BMP280 is
    procedure Read_Values_Float (This : BMP280_Device;
                                 Values : out BMP280_Values_Float);
 
---private
+private
 
    Type Byte_Array is Array (Positive Range <>) of UInt8
      with Alignment => 2;
@@ -154,7 +154,7 @@ package BMP280 is
 
    type BMP280_Device (Port: Any_SPI_Port;
                        Cs: Any_GPIO_Point;
-                       Time : not null HAL.Time.Any_Delays) is record
+                       Time : not null HAL.Time.Any_Delays) is tagged limited record
       Cal : BMP280_Calibration;
       Raw : BMP280_Raw_Readout;
    end record;

@@ -25,7 +25,7 @@ package body BMP280 is
    begin
 
       -- Check the Device Id
-      Read_Port (This, BMP280_Device_Id_Address, D_Id);
+      This.Read_Port (BMP280_Device_Id_Address, D_Id);
       if D_Id(1) /= BMP280_Device_Id then
          return;
       end if;
@@ -33,12 +33,12 @@ package body BMP280 is
       Config := (t_sb => Configuration.Standby_Time,
                  filter => Configuration.Filter_Coefficient,
                  spi3w => False);
-      Write_Port (This, BMP280_Config_Address, Config_To_Uint8(Config));
+      This.Write_Port (BMP280_Config_Address, Config_To_Uint8(Config));
 
       Control := (osrs_t => Configuration.Temperature_Oversampling,
                   osrs_p => Configuration.Pressure_Oversampling,
                   mode => Normal);
-      Write_Port (This, BMP280_Control_Address, Control_To_Uint8(Control));
+      This.Write_Port (BMP280_Control_Address, Control_To_Uint8(Control));
 
       -- Read the Calibration Data
       Read_Port(This, BMP280_Calibration_Address, C_Data);
@@ -71,8 +71,8 @@ package body BMP280 is
 
       Read_Port(This, BMP280_Readout_Address, C_Data);
       Readout := To_Readout(C_Data);
-      Value.Temperature := Compensate_Temperature(This, Readout);
-      Value.Pressure := Compensate_Pressure(This, Readout, Value.Temperature);
+      Value.Temperature := This.Compensate_Temperature(Readout);
+      Value.Pressure := This.Compensate_Pressure(Readout, Value.Temperature);
 
    end Read_Values_Int;
 
@@ -83,7 +83,7 @@ package body BMP280 is
       Int_Values : BMP280_Values_Int;
    begin
 
-      Read_Values_Int(This, Int_Values);
+      This.Read_Values_Int(Int_Values);
 
       Values.Temperature := Float(Int_Values.Temperature) / 100.0;
       Values.Pressure := Float(Int_Values.Pressure) / 256.0;
