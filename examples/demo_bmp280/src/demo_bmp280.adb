@@ -62,6 +62,7 @@ with STM32_SVD.I2C;
 
 with BMP280; use BMP280;
 with BMP280.SPI;
+with BMP280.I2C;
 
 with System.Machine_Code;
 
@@ -75,6 +76,8 @@ procedure Demo_BMP280 is
 
    Sca_Pin :  GPIO_Point := PB10;
    Scl_Pin :  GPIO_Point := PB11;
+   --Sca_Pin :  GPIO_Point := PC9;
+   --Scl_Pin :  GPIO_Point := PA8;
    I2C_Pins : constant GPIO_Points := (Sca_Pin, Scl_Pin);
 
    UART_Pins : constant GPIO_Points := (PA2, PA3);
@@ -121,7 +124,7 @@ procedure Demo_BMP280 is
       Configure(I2C_2, (
                 Clock_Speed => 100_000,
                 Mode => I2C_Mode,
-                Duty_Cycle => DutyCycle_16_9,
+                Duty_Cycle => DutyCycle_2,
                 Addressing_Mode => Addressing_Mode_7bit,
                 Own_Address => 0,
                 others => <>));
@@ -204,20 +207,20 @@ procedure Demo_BMP280 is
    T : Time := Clock;
    Count : Integer := 0;
 
-   --Sensor : BMP280_Device (SPI_1'Access, PD7'Access);
-   package BMP280_SPI is new BMP280.SPI(BMP280_Device);
-   Sensor : BMP280_SPI.SPI_BMP280_Device (SPI_1'Access, PD7'Access);
+   package BMP280_SPI is new BMP280.SPI (BMP280_Device);
+   Sensor1 : BMP280_SPI.SPI_BMP280_Device (SPI_1'Access, PD7'Access);
+
+   package BMP280_I2C is new BMP280.I2C (BMP280_Device);
+   Sensor2 : BMP280_I2C.I2C_BMP280_Device (I2C_2'Access, BMP280_I2C.Low);
 
    IData : SPI_Data_8b := (16#D0#, 0);
-
-   --Status2 : SPI_Status;
 begin
 
    Initialize_UART;
    T := T + Milliseconds (50);
    delay until T;
 
-   --Initialize_I2C;
+   Initialize_I2C;
    Initialize_SPI;
    Cs_Pin.Set;
    T := T + Milliseconds (50);
@@ -231,22 +234,26 @@ begin
          Pressure_Oversampling => x16,
          Filter_Coefficient => 0);
    begin
-      Sensor.Configure(Conf);
+      Sensor1.Configure(Conf);
+      Sensor2.Configure(Conf);
+      null;
    end;
 
    loop
 
-      --Cs_Pin.Clear;
-      --SPI_1.Transmit(IData, Status2);
-      --Cs_Pin.Set;
-
       declare
          Values : BMP280_Values_Float;
       begin
-         Sensor.Read_Values_Float(Values);
-         Put_Line("Temperature: " & Values.Temperature'Img);
-         Put_Line("Pressure: " & Values.Pressure'Img);
-         Put_Line("Height: " & Height_From_Pressure(Values.Pressure)'Img);
+         Sensor1.Read_Values_Float(Values);
+         Put_Line("Temp1: " & Values.Temperature'Img);
+         Put_Line("Pres1: " & Values.Pressure'Img);
+
+         Sensor2.Read_Values_Float(Values);
+         Put_Line("Temp2: " & Values.Temperature'Img);
+         Put_Line("Pres2: " & Values.Pressure'Img);
+
+         --Put_Line("Height: " & Height_From_Pressure(Values.Pressure)'Img);
+         null;
       end;
 
       Put_Line ("Hello  " & Count'Img);

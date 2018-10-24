@@ -222,15 +222,17 @@ package body BMP280 is
    procedure Read_Port (This : BMP280_Device;
                         Address : UInt8;
                         Data : out Byte_Array) is
+      Not_Implemented_Error : exception;
    begin
-      null;
+      raise Not_Implemented_Error;
    end Read_Port;
 
    procedure Write_Port (This : BMP280_Device;
                          Address : UInt8;
                          Data : UInt8) is
+      Not_Implemented_Error : exception;
    begin
-      null;
+      raise Not_Implemented_Error;
    end Write_Port;
 
 end BMP280;

@@ -28,24 +28,25 @@
 --   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   --
 --                                                                          --
 ------------------------------------------------------------------------------
-package body BMP280.SPI is
+
+with Ada.Unchecked_Conversion;
+package body BMP280.I2C is
+
+   function Rep is new Ada.Unchecked_Conversion (SDO_Pin, UInt8);
 
    overriding
-   procedure Read_Port (This : SPI_BMP280_Device;
+   procedure Read_Port (This : I2C_BMP280_Device;
                         Address : UInt8;
                         Data : out Byte_Array) is
 
-      SPI_Address : constant SPI_Data_8b (1 .. 1) := (1 => Address);
-      Status : SPI_Status;
+      Status : I2C_Status;
 
       Communication_Error : exception;
+
    begin
-
-      This.Cs.Clear;
-      This.Port.Transmit (SPI_Address, Status);
-      This.Port.Receive (SPI_Data_8b (Data (Data'Range)), Status);
-
-      This.Cs.Set;
+      This.Port.Mem_Read (UInt10 (Rep (This.SDO)), UInt16 (Address),
+                          Memory_Size_8b, I2C_Data (Data (Data'Range)),
+                          Status);
 
       if Status /= Ok then
          raise Communication_Error;
@@ -53,20 +54,17 @@ package body BMP280.SPI is
    end Read_Port;
 
    overriding
-   procedure Write_Port (This : SPI_BMP280_Device;
+   procedure Write_Port (This : I2C_BMP280_Device;
                          Address : UInt8;
                          Data : UInt8) is
 
-      Write_Mask : constant UInt8 := 2#01111111#;
-      SPI_Data : constant SPI_Data_8b (1 .. 2) := (1 => Address and Write_Mask,
-                                                   2 => Data);
-      Status : SPI_Status;
+      Port_Data : constant I2C_Data (1 .. 1) := (1 => Data);
+      Status : I2C_Status;
 
       Communication_Error : exception;
    begin
-      This.Cs.Clear;
-      This.Port.Transmit (SPI_Data, Status);
-      This.Cs.Set;
+      This.Port.Mem_Write (UInt10 (Rep (This.SDO)), UInt16 (Address),
+                          Memory_Size_8b, Port_Data, Status);
 
       if Status /= Ok then
          raise Communication_Error;
@@ -74,4 +72,4 @@ package body BMP280.SPI is
    end Write_Port;
 
 
-end BMP280.SPI;
+end BMP280.I2C;

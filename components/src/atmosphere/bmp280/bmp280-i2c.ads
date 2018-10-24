@@ -28,50 +28,35 @@
 --   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   --
 --                                                                          --
 ------------------------------------------------------------------------------
-package body BMP280.SPI is
+
+with HAL; use HAL;
+with HAL.I2C; use HAL.I2C;
+
+with BMP280; use BMP280;
+generic
+   type Some_BMP280_Device is new BMP280_Device with private;
+package BMP280.I2C is
+
+   type SDO_Pin is (Low, High);
+   for SDO_Pin use (Low => 2#11101100#,
+                    High => 2#11101110#);
+
+   type I2C_BMP280_Device (Port : Any_I2C_Port;
+                           SDO : SDO_Pin) is new Some_BMP280_Device with private;
+
+private
+
+   type I2C_BMP280_Device (Port : Any_I2C_Port;
+                           SDO : SDO_Pin) is new Some_BMP280_Device with null record;
 
    overriding
-   procedure Read_Port (This : SPI_BMP280_Device;
+   procedure Read_Port (This : I2C_BMP280_Device;
                         Address : UInt8;
-                        Data : out Byte_Array) is
-
-      SPI_Address : constant SPI_Data_8b (1 .. 1) := (1 => Address);
-      Status : SPI_Status;
-
-      Communication_Error : exception;
-   begin
-
-      This.Cs.Clear;
-      This.Port.Transmit (SPI_Address, Status);
-      This.Port.Receive (SPI_Data_8b (Data (Data'Range)), Status);
-
-      This.Cs.Set;
-
-      if Status /= Ok then
-         raise Communication_Error;
-      end if;
-   end Read_Port;
+                        Data : out Byte_Array);
 
    overriding
-   procedure Write_Port (This : SPI_BMP280_Device;
+   procedure Write_Port (This : I2C_BMP280_Device;
                          Address : UInt8;
-                         Data : UInt8) is
+                         Data : UInt8);
 
-      Write_Mask : constant UInt8 := 2#01111111#;
-      SPI_Data : constant SPI_Data_8b (1 .. 2) := (1 => Address and Write_Mask,
-                                                   2 => Data);
-      Status : SPI_Status;
-
-      Communication_Error : exception;
-   begin
-      This.Cs.Clear;
-      This.Port.Transmit (SPI_Data, Status);
-      This.Cs.Set;
-
-      if Status /= Ok then
-         raise Communication_Error;
-      end if;
-   end Write_Port;
-
-
-end BMP280.SPI;
+end BMP280.I2C;
