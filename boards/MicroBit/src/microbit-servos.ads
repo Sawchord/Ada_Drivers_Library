@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 --                                                                          --
---                       Copyright (C) 2017, AdaCore                        --
+--                       Copyright (C) 2018, AdaCore                        --
 --                                                                          --
 --  Redistribution and use in source and binary forms, with or without      --
 --  modification, are permitted provided that the following conditions are  --
@@ -29,25 +29,24 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-package MicroBit.Buttons is
+with MicroBit.IOs; use MicroBit.IOs;
 
-   type Button_State is (Pressed, Released);
-   type Button_Id is (Button_A, Button_B);
+package MicroBit.Servos is
 
-   function State (Button : Button_Id) return Button_State;
-   --  Indicate the current state of the requested button
+   --  Servo-motors control
 
-   type Button_Callback is access procedure (Button : Button_Id;
-                                             State  : Button_State);
+   subtype Servo_Pin_Id is Pin_Id
+     with Predicate => Supports (Servo_Pin_Id, Analog);
 
-   function Subscribe (Callback : not null Button_Callback) return Boolean;
-   --  Add Callback to the list of subscribers. Return False if Callback cannot
-   --  be added.
-   --
-   --  Callback will be executed each time a button state changes.
+   type Servo_Set_Point is range 0 .. 180;
 
-   function Unsubscribe (Callback : not null Button_Callback) return Boolean;
-   --  Remove Callback from the list of subscribers. Return False if Callback
-   --  is not in the list of sucbscribers.
+   procedure Stop (Pin : Servo_Pin_Id);
+   --  Disable PWM signal on pin
 
-end MicroBit.Buttons;
+   procedure Go (Pin : Servo_Pin_Id; Setpoint : Servo_Set_Point);
+   --  Configures this IO pin as an analog/pwm output (if necessary) and
+   --  configures the period to be 20ms, with a duty cycle between 500 us and
+   --  2500 us. A value of 180 sets the duty cycle to be 2500us, and a value
+   --  of 0 sets the duty cycle to be 500us.
+
+end MicroBit.Servos;

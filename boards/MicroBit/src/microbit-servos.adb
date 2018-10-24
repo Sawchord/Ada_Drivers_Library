@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 --                                                                          --
---                       Copyright (C) 2017, AdaCore                        --
+--                       Copyright (C) 2018, AdaCore                        --
 --                                                                          --
 --  Redistribution and use in source and binary forms, with or without      --
 --  modification, are permitted provided that the following conditions are  --
@@ -29,25 +29,42 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-package MicroBit.Buttons is
+package body MicroBit.Servos is
 
-   type Button_State is (Pressed, Released);
-   type Button_Id is (Button_A, Button_B);
+   Servo_0 : constant := 1023 * 500 / 20_000;
 
-   function State (Button : Button_Id) return Button_State;
-   --  Indicate the current state of the requested button
+   function To_PWM (SP : Servo_Set_Point) return Analog_Value is
+      (Servo_0 + Analog_Value (1023 * Integer (SP) / 1800));
 
-   type Button_Callback is access procedure (Button : Button_Id;
-                                             State  : Button_State);
+   Analog_Period_Set : Boolean := False;
 
-   function Subscribe (Callback : not null Button_Callback) return Boolean;
-   --  Add Callback to the list of subscribers. Return False if Callback cannot
-   --  be added.
-   --
-   --  Callback will be executed each time a button state changes.
+   ----------
+   -- Stop --
+   ----------
 
-   function Unsubscribe (Callback : not null Button_Callback) return Boolean;
-   --  Remove Callback from the list of subscribers. Return False if Callback
-   --  is not in the list of sucbscribers.
+   procedure Stop (Pin : Servo_Pin_Id) is
+   begin
+      if Supports (Pin, Digital) then
+         Set (Pin, False);
+      else
+         Write (Pin, 0);
+      end if;
+   end Stop;
 
-end MicroBit.Buttons;
+   --------
+   -- Go --
+   --------
+
+   procedure Go (Pin : Servo_Pin_Id; Setpoint : Servo_Set_Point) is
+   begin
+      if not Analog_Period_Set then
+         --  Set PWM period to 20_000 µs (50 Hz)
+
+         Set_Analog_Period_Us (20_000);
+         Analog_Period_Set := True;
+      end if;
+
+      Write (Pin, To_PWM (Setpoint));
+   end Go;
+
+end MicroBit.Servos;
