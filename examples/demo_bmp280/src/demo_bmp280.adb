@@ -63,7 +63,6 @@ with STM32_SVD.I2C;
 with BMP280; use BMP280;
 
 with System.Machine_Code;
-with Ravenscar_Time;
 
 procedure Demo_BMP280 is
 
@@ -196,10 +195,15 @@ procedure Demo_BMP280 is
       New_Line;
    end Put_Line;
 
+   function Height_From_Pressure(P : Float) return Float is
+   begin
+      return (101300.0 - P) / 11.7;
+   end Height_From_Pressure;
+
    T : Time := Clock;
    Count : Integer := 0;
 
-   Sensor : BMP280_Device (SPI_1'Access, PD7'Access, Ravenscar_Time.Delays);
+   Sensor : BMP280_Device (SPI_1'Access, PD7'Access);
 
    IData : SPI_Data_8b := (16#D0#, 0);
 
@@ -239,6 +243,7 @@ begin
          Sensor.Read_Values_Float(Values);
          Put_Line("Temperature: " & Values.Temperature'Img);
          Put_Line("Pressure: " & Values.Pressure'Img);
+         Put_Line("Height: " & Height_From_Pressure(Values.Pressure)'Img);
       end;
 
       Put_Line ("Hello  " & Count'Img);

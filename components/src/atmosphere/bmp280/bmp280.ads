@@ -32,7 +32,6 @@
 with HAL; use HAL;
 with HAL.SPI; use HAL.SPI;
 with HAL.GPIO; use HAL.GPIO;
-with HAL.Time;
 
 with Interfaces; use Interfaces;
 
@@ -41,8 +40,9 @@ package BMP280 is
    -- TODO: Abstract Port to also support
    -- I2C interface Both addresses and 3Wire
    type BMP280_Device (Port: Any_SPI_Port;
-                       Cs: Any_GPIO_Point;
-                       Time : not null HAL.Time.Any_Delays) is tagged limited private;
+                       Cs: Any_GPIO_Point) is tagged limited private;
+
+
 
    type BMP280_Values_Int is record
       Temperature : Integer_32;
@@ -84,6 +84,8 @@ package BMP280 is
       Filter_Coefficient : Uint3;
    end record;
 
+   type Byte_Array is array (Positive range <>) of UInt8
+     with Alignment => 2;
 
    procedure Configure (This : in out BMP280_Device;
                         Configuration : BMP280_Configuration);
@@ -95,9 +97,6 @@ package BMP280 is
                                 Values : out BMP280_Values_Float);
 
 private
-
-   Type Byte_Array is Array (Positive Range <>) of UInt8
-     with Alignment => 2;
 
    BMP280_Device_Id : constant Uint8 := 16#58#;
    BMP280_Reset_Magic : constant Uint8 := 16#B6#;
@@ -186,8 +185,7 @@ private
    end record;
 
    type BMP280_Device (Port: Any_SPI_Port;
-                       Cs: Any_GPIO_Point;
-                       Time : not null HAL.Time.Any_Delays) is tagged limited record
+                       Cs: Any_GPIO_Point) is tagged limited record
       Cal : BMP280_Calibration;
       Raw : BMP280_Raw_Readout;
    end record;
