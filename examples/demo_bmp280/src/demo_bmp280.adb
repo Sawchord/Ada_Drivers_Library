@@ -222,7 +222,7 @@ begin
         (Standby_Time => ms125,
          Temperature_Oversampling => x16,
          Pressure_Oversampling => x16,
-         Filter_Coefficient => 1);
+         Filter_Coefficient => 0);
    begin
       Sensor.Configure(Conf);
    end;
