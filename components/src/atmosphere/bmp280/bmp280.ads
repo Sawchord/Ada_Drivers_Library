@@ -30,8 +30,8 @@
 ------------------------------------------------------------------------------
 
 with HAL; use HAL;
-with HAL.SPI; use HAL.SPI;
-with HAL.GPIO; use HAL.GPIO;
+--with HAL.SPI; use HAL.SPI;
+--with HAL.GPIO; use HAL.GPIO;
 
 with Interfaces; use Interfaces;
 
@@ -39,10 +39,7 @@ package BMP280 is
 
    -- TODO: Abstract Port to also support
    -- I2C interface Both addresses and 3Wire
-   type BMP280_Device (Port: Any_SPI_Port;
-                       Cs: Any_GPIO_Point) is tagged limited private;
-
-
+   type BMP280_Device is tagged limited private;
 
    type BMP280_Values_Int is record
       Temperature : Integer_32;
@@ -184,8 +181,7 @@ private
       Reserved_44_47 at 16#3# range 20..23;
    end record;
 
-   type BMP280_Device (Port: Any_SPI_Port;
-                       Cs: Any_GPIO_Point) is tagged limited record
+   type BMP280_Device is tagged limited record
       Cal : BMP280_Calibration;
       Raw : BMP280_Raw_Readout;
    end record;
@@ -202,11 +198,11 @@ private
 
 
    procedure Read_Port (This : BMP280_Device;
-                   Address : UInt8;
-                   Data : out Byte_Array);
+                        Address : UInt8;
+                        Data : out Byte_Array);
 
    procedure Write_Port (This : BMP280_Device;
-                    Address : UInt8;
-                    Data : UInt8);
+                         Address : UInt8;
+                         Data : UInt8);
 
 end BMP280;

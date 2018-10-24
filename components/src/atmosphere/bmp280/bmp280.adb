@@ -32,7 +32,10 @@
 with Ada.Unchecked_Conversion;
 
 package body BMP280 is
+
    -- TODO: Introduce Status Value
+   subtype Dispatch is BMP280_Device'Class;
+
    procedure Configure (This : in out BMP280_Device;
                         Configuration : BMP280_Configuration) is
 
@@ -48,33 +51,33 @@ package body BMP280 is
         Ada.Unchecked_Conversion (Source => Byte_Array,
                                   Target => BMP280_Calibration);
 
-      D_Id : Byte_Array(1..1);
+      D_Id : Byte_Array (1 .. 1);
       Config : BMP280_Config;
       Control : BMP280_Control;
-      C_Data : Byte_Array(1..BMP280_Calibration'Size/8);
+      C_Data : Byte_Array (1 .. BMP280_Calibration'Size / 8);
    begin
 
-      -- Check the Device Id
-      This.Read_Port (BMP280_Device_Id_Address, D_Id);
-      if D_Id(1) /= BMP280_Device_Id then
+      --  Check the Device Id
+      Dispatch (This).Read_Port (BMP280_Device_Id_Address, D_Id);
+      if D_Id (1) /= BMP280_Device_Id then
          return;
       end if;
 
-      -- Read the Calibration Data
-      Read_Port(This, BMP280_Calibration_Address, C_Data);
-      This.Cal := To_Calibration(C_Data);
+      --  Read the Calibration Data
+      Dispatch (This).Read_Port (BMP280_Calibration_Address, C_Data);
+      This.Cal := To_Calibration (C_Data);
 
-      -- Configure the device
+      --  Configure the device
       Control := (osrs_t => Configuration.Temperature_Oversampling,
                   osrs_p => Configuration.Pressure_Oversampling,
                   mode => Normal);
-      This.Write_Port (BMP280_Control_Address, Control_To_Uint8(Control));
+      Dispatch (This).Write_Port (BMP280_Control_Address, Control_To_Uint8 (Control));
 
       Config := (t_sb => Configuration.Standby_Time,
                  filter => Configuration.Filter_Coefficient,
                  reserved_1 => False,
                  spi3w => False);
-      This.Write_Port (BMP280_Config_Address, Config_To_Uint8(Config));
+      Dispatch (This).Write_Port (BMP280_Config_Address, Config_To_Uint8(Config));
 
    end Configure;
 
@@ -87,7 +90,7 @@ package body BMP280 is
       function To_Readout (C_Data : Byte_Array) return BMP280_Raw_Readout is
       begin
          return BMP280_Raw_Readout'(Temperature => UInt20(
-                                    Shift_Left(Unsigned_32(C_Data(4)), 12)
+                                    Shift_Left (Unsigned_32 (C_Data(4)), 12)
                                     or Shift_Left(Unsigned_32(C_Data(5)), 4)
                                     or Shift_Right(Unsigned_32(C_Data(6)), 4)),
                                     Reserved_20_23 => 0,
@@ -102,7 +105,7 @@ package body BMP280 is
       C_Data : Byte_Array(1..BMP280_Raw_Readout'Size/8);
    begin
 
-      Read_Port(This, BMP280_Readout_Address, C_Data);
+      Dispatch(This).Read_Port(BMP280_Readout_Address, C_Data);
       Readout := To_Readout(C_Data);
       Value.Temperature := This.Compensate_Temperature(Readout);
       Value.Pressure := This.Compensate_Pressure(Readout, Value.Temperature);
@@ -180,8 +183,8 @@ package body BMP280 is
       t_fine : Integer_64;
    begin
 
-      P := Integer_64(Readout.Pressure);
-      t_fine := (Shl(Integer_64(Temperature), 8) - 128 ) / 5;
+      p := Integer_64(Readout.Pressure);
+      t_fine := (Shl (Integer_64 (Temperature), 8) - 128 ) / 5;
 
       var1 := t_fine - 128000;
       var2 := (var1**2) * Integer_64(This.Cal.dig_P6);
@@ -200,42 +203,28 @@ package body BMP280 is
       p := 1048576 - p;
       p := ((Shl(p, 31) - var2) * 3125) / var1;
 
-      var1 := Shr(Integer_64(This.Cal.dig_P9) * (Shr(p, 13)**2), 25);
-      var2 := Shr(Integer_64(This.Cal.dig_P8) * p, 19);
+      var1 := Shr (Integer_64 (This.Cal.dig_P9) * (Shr (p, 13)**2), 25);
+      var2 := Shr (Integer_64 (This.Cal.dig_P8) * p, 19);
 
-      p := Shr(p + var1 + var2, 8) + Shl(Integer_64(This.Cal.dig_P7), 4);
+      p := Shr (p + var1 + var2, 8) + Shl (Integer_64 (This.Cal.dig_P7), 4);
 
       return p;
    end Compensate_Pressure;
 
+   -- TODO: Raise unimplemented exceptions
 
    procedure Read_Port (This : BMP280_Device;
-                   Address : UInt8;
-                   Data : out Byte_Array) is
-
-      SPI_Address : constant SPI_Data_8b(1..1) := (1=> Address);
-      SPI_Data : SPI_Data_8b(Data'Range);
-      Status : SPI_Status;
+                        Address : UInt8;
+                        Data : out Byte_Array) is
    begin
-
-      -- TODO: Make this possible without need to copy data afterwards
-      This.Cs.Clear;
-      This.Port.Transmit(SPI_Address, Status);
-      This.Port.Receive(SPI_Data, Status);
-      This.Cs.Set;
-
-      Data(Data'Range) := Byte_Array(SPI_Data(Data'Range));
+      null;
    end Read_Port;
 
-
-   procedure Write_Port (This : BMP280_Device; Address : UInt8; Data : UInt8) is
-      Write_Mask : constant UInt8 := 2#01111111#;
-      SPI_Data : constant SPI_Data_8b(1..2) := (1 => Address and Write_Mask, 2=> Data);
-      Status : SPI_Status;
+   procedure Write_Port (This : BMP280_Device;
+                         Address : UInt8;
+                         Data : UInt8) is
    begin
-      This.Cs.Clear;
-      This.Port.Transmit(SPI_Data, Status);
-      This.Cs.Set;
+      null;
    end Write_Port;
 
 end BMP280;

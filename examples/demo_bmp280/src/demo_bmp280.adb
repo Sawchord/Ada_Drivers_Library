@@ -61,6 +61,7 @@ with STM32.USARTs; use STM32.USARTs;
 with STM32_SVD.I2C;
 
 with BMP280; use BMP280;
+with BMP280.SPI;
 
 with System.Machine_Code;
 
@@ -203,7 +204,9 @@ procedure Demo_BMP280 is
    T : Time := Clock;
    Count : Integer := 0;
 
-   Sensor : BMP280_Device (SPI_1'Access, PD7'Access);
+   --Sensor : BMP280_Device (SPI_1'Access, PD7'Access);
+   package BMP280_SPI is new BMP280.SPI(BMP280_Device);
+   Sensor : BMP280_SPI.SPI_BMP280_Device (SPI_1'Access, PD7'Access);
 
    IData : SPI_Data_8b := (16#D0#, 0);
 

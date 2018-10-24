@@ -33,18 +33,18 @@ with HAL; use HAL;
 with HAL.SPI; use HAL.SPI;
 with HAL.GPIO; use HAL.GPIO;
 
-with Interfaces; use Interfaces;
-
 with BMP280; use BMP280;
 generic
    type Some_BMP280_Device is new BMP280_Device with private;
 package BMP280.SPI is
 
-   type SPI_BMP280_Device is new Some_BMP280_Device with private;
+   type SPI_BMP280_Device (Port: Any_SPI_Port;
+                           Cs: Any_GPIO_Point) is new Some_BMP280_Device with private;
 
 private
 
-   type SPI_BMP280_Device is new Some_BMP280_Device with null record;
+   type SPI_BMP280_Device (Port: Any_SPI_Port;
+                           Cs: Any_GPIO_Point) is new Some_BMP280_Device with null record;
 
    overriding
    procedure Read_Port (This : SPI_BMP280_Device;
