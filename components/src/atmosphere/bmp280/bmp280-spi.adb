@@ -30,34 +30,37 @@
 ------------------------------------------------------------------------------
 package body BMP280.SPI is
 
+   overriding
    procedure Read_Port (This : SPI_BMP280_Device;
                         Address : UInt8;
                         Data : out Byte_Array) is
 
-      SPI_Address : constant SPI_Data_8b(1..1) := (1=> Address);
-      SPI_Data : SPI_Data_8b(Data'Range);
+      SPI_Address : constant SPI_Data_8b (1 .. 1) := (1 => Address);
+      SPI_Data : SPI_Data_8b (Data'Range);
       Status : SPI_Status;
    begin
 
-      -- TODO: Make this possible without need to copy data afterwards
+      --   TODO: Make this possible without need to copy data afterwards
       This.Cs.Clear;
-      This.Port.Transmit(SPI_Address, Status);
-      This.Port.Receive(SPI_Data, Status);
+      This.Port.Transmit (SPI_Address, Status);
+      This.Port.Receive (SPI_Data, Status);
       This.Cs.Set;
 
-      Data(Data'Range) := Byte_Array(SPI_Data(Data'Range));
+      Data (Data'Range) := Byte_Array (SPI_Data (Data'Range));
    end Read_Port;
 
+   overriding
    procedure Write_Port (This : SPI_BMP280_Device;
                          Address : UInt8;
                          Data : UInt8) is
 
       Write_Mask : constant UInt8 := 2#01111111#;
-      SPI_Data : constant SPI_Data_8b(1..2) := (1 => Address and Write_Mask, 2=> Data);
+      SPI_Data : constant SPI_Data_8b (1 .. 2) := (1 => Address and Write_Mask,
+                                                   2 => Data);
       Status : SPI_Status;
    begin
       This.Cs.Clear;
-      This.Port.Transmit(SPI_Data, Status);
+      This.Port.Transmit (SPI_Data, Status);
       This.Cs.Set;
    end Write_Port;
 

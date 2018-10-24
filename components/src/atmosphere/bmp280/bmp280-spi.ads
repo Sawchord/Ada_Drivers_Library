@@ -38,13 +38,13 @@ generic
    type Some_BMP280_Device is new BMP280_Device with private;
 package BMP280.SPI is
 
-   type SPI_BMP280_Device (Port: Any_SPI_Port;
-                           Cs: Any_GPIO_Point) is new Some_BMP280_Device with private;
+   type SPI_BMP280_Device (Port : Any_SPI_Port;
+                           Cs : Any_GPIO_Point) is new Some_BMP280_Device with private;
 
 private
 
-   type SPI_BMP280_Device (Port: Any_SPI_Port;
-                           Cs: Any_GPIO_Point) is new Some_BMP280_Device with null record;
+   type SPI_BMP280_Device (Port : Any_SPI_Port;
+                           Cs : Any_GPIO_Point) is new Some_BMP280_Device with null record;
 
    overriding
    procedure Read_Port (This : SPI_BMP280_Device;
@@ -56,5 +56,4 @@ private
                          Address : UInt8;
                          Data : UInt8);
 
-  --type Some_BMP280_Device is new BMP280_Device with null record;
 end BMP280.SPI;
