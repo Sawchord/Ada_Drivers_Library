@@ -190,6 +190,8 @@ package body BMP280 is
    begin
 
       p := Integer_64 (Readout.Pressure);
+      --  TODO: Calculating back and forth is inefficient
+      --  Find a better way to store t_fine
       t_fine := (Shl (Integer_64 (Temperature), 8) - 128) / 5;
 
       var1 := t_fine - 128000;

@@ -171,8 +171,8 @@ private
    end record
      with Size => 48;
    for BMP280_Raw_Readout use record
-      -- TODO : Check LSB issues
-      -- TODO : Make this ue decimals
+      --  TODO : Check LSB issues
+      --  TODO : Make this ue decimals
       Pressure       at 16#0# range 0 .. 19;
       Reserved_20_23 at 16#0# range 20 .. 23;
       Temperature    at 16#3# range 0 .. 19;
@@ -181,6 +181,7 @@ private
 
    type BMP280_Device is tagged limited record
       Cal : BMP280_Calibration;
+      --  TODO: Storing Values necessary?
       Raw : BMP280_Raw_Readout;
    end record;
 
