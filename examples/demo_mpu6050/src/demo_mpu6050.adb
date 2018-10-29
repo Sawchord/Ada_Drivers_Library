@@ -29,8 +29,7 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Last_Chance_Handler;      pragma Unreferenced (Last_Chance_Handler);
--- with Output_Utils; use Output_Utils;
+with Last_Chance_Handler; pragma Unreferenced (Last_Chance_Handler);
 
 with Ada.Real_Time; use Ada.Real_Time;
 
@@ -55,22 +54,23 @@ with BMP280.I2C;
 
 with System.Machine_Code;
 
-procedure Demo_BMP280 is
+procedure Demo_MPU6050 is
 
+   -- SPI connection for the BMP280
    Clk_Pin  : constant GPIO_Point := PB3;
    Miso_Pin : constant GPIO_Point := PB4;
    Mosi_Pin : constant GPIO_Point := PB5;
    SPI_Pins : constant GPIO_Points := (Clk_Pin, Miso_Pin, Mosi_Pin);
    Cs_Pin : GPIO_Point := PD7;
 
+   -- I2C connection for the MPU6050
    Sca_Pin :  GPIO_Point := PB10;
    Scl_Pin :  GPIO_Point := PB11;
-   --Sca_Pin :  GPIO_Point := PC9;
-   --Scl_Pin :  GPIO_Point := PA8;
    I2C_Pins : constant GPIO_Points := (Sca_Pin, Scl_Pin);
 
    UART_Pins : constant GPIO_Points := (PA2, PA3);
 
+   -- TODO : Set all internal Resistors to Floating
 
    procedure Initialize_UART is
    begin
@@ -199,9 +199,6 @@ procedure Demo_BMP280 is
    package BMP280_SPI is new BMP280.SPI (BMP280_Device);
    Sensor1 : BMP280_SPI.SPI_BMP280_Device (SPI_1'Access, PD7'Access);
 
-   package BMP280_I2C is new BMP280.I2C (BMP280_Device);
-   Sensor2 : BMP280_I2C.I2C_BMP280_Device (I2C_2'Access, BMP280_I2C.Low);
-
    IData : SPI_Data_8b := (16#D0#, 0);
 begin
 
@@ -224,7 +221,6 @@ begin
          Filter_Coefficient => 0);
    begin
       Sensor1.Configure(Conf);
-      Sensor2.Configure(Conf);
       null;
    end;
 
@@ -236,12 +232,6 @@ begin
          Sensor1.Read_Values_Float(Values);
          Put_Line("Temp1: " & Values.Temperature'Img);
          Put_Line("Pres1: " & Values.Pressure'Img);
-
-         Sensor2.Read_Values_Float(Values);
-         Put_Line("Temp2: " & Values.Temperature'Img);
-         Put_Line("Pres2: " & Values.Pressure'Img);
-
-         --Put_Line("Height: " & Height_From_Pressure(Values.Pressure)'Img);
          null;
       end;
 
@@ -252,4 +242,4 @@ begin
       delay until T;
 
    end loop;
-end Demo_BMP280;
+end Demo_MPU6050;

@@ -217,8 +217,6 @@ package body BMP280 is
       return p;
    end Compensate_Pressure;
 
-   --   TODO: Raise unimplemented exceptions
-
    procedure Read_Port (This : BMP280_Device;
                         Address : UInt8;
                         Data : out Byte_Array) is

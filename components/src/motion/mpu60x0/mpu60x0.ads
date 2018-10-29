@@ -1,0 +1,171 @@
+------------------------------------------------------------------------------
+--                                                                          --
+--                  Copyright (C) 2018, AdaCore                        --
+--                                                                          --
+--  Redistribution and use in source and binary forms, with or without      --
+--  modification, are permitted provided that the following conditions are  --
+--  met:                                                                    --
+--     1. Redistributions of source code must retain the above copyright    --
+--        notice, this list of conditions and the following disclaimer.     --
+--     2. Redistributions in binary form must reproduce the above copyright --
+--        notice, this list of conditions and the following disclaimer in   --
+--        the documentation and/or other materials provided with the        --
+--        distribution.                                                     --
+--     3. Neither the name of the copyright holder nor the names of its     --
+--        contributors may be used to endorse or promote products derived   --
+--        from this software without specific prior written permission.     --
+--                                                                          --
+--   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS    --
+--   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT      --
+--   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR  --
+--   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT   --
+--   HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, --
+--   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT       --
+--   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,  --
+--   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY  --
+--   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT    --
+--   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE  --
+--   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   --
+--                                                                          --
+------------------------------------------------------------------------------
+
+with HAL; use HAL;
+--with Interfaces; use Interfaces;
+
+package MPU60x0 is
+
+   type MPU60x0_Device is tagged limited private;
+
+   -- TODO: Definition of Configuration and Value record
+
+   type MPU60x0_Gyro_Scale_Range is (deg_250_s, deg_500_s,
+                                     deg_1000_s, deg_2500_s)
+     with Size => 2;
+   for MPU60x0_Gyro_Scale_Range use (deg_250_s => 0, deg_500_s => 1,
+                                     deg_1000_s => 2, deg_2500_s => 3);
+
+   type MPU60x0_Accel_Scale_Range is (g2, g4, g8, g16)
+     with Size => 2;
+   for MPU60x0_Accel_Scale_Range use (g2 => 0, g4 => 1, g8 => 2, g16 => 3);
+
+
+private
+
+   type Self_Test_Registers is record
+      XA_Test_H : UInt3;
+      XG_Test : UInt5;
+      YA_Test_H : UInt3;
+      YG_Test : UInt5;
+      ZA_Test_H : UInt3;
+      ZG_Test : UInt5;
+      Reserved_6_7 : UInt2;
+      XA_Test_L : UInt2;
+      YA_Test_L : UInt2;
+      ZA_Test_L : UInt2;
+   end record
+     with Size => 32;
+   for Self_Test_Registers use record
+      XA_Test_H at 0 range 5 .. 7;
+      XG_Test at 0 range 0 .. 4;
+      YA_Test_H at 1 range 5 .. 7;
+      YG_Test  at 1 range 0 .. 4;
+      ZA_Test_H at 2 range 5 .. 7;
+      ZG_Test at 2 range 0 .. 4;
+      Reserved_6_7 at 3 range 6 .. 7;
+      XA_Test_L at 3 range 4 .. 5;
+      YA_Test_L at 3 range 2 .. 3;
+      ZA_Test_L at 3 range 0 .. 1;
+   end record;
+   SELF_TEST_REG_ADDRESS : constant UInt8 := 16#0D#;
+
+   type Sample_Rate_Divider is new UInt8;
+   SR_DIV_ADDRESS : constant UInt8 := 16#19#;
+
+   type MPU60x0_Filter_Setting is new UInt3;
+   type Config is record
+      Reserved_3_7 : UInt5;
+      Filter_Setting : MPU60x0_Filter_Setting;
+   end record
+     with Size => 8;
+   for Config use record
+      Reserved_3_7 at 0 range 3 .. 7;
+      Filter_Setting at 0 range 0 .. 2;
+   end record;
+   CONFIG_ADDRESS : constant UInt8 := 16#1A#;
+
+   type Gyro_Config is record
+      XG_Selftest : Boolean;
+      YG_Selftest : Boolean;
+      ZG_Selftest : Boolean;
+      Scale_Range : MPU60x0_Gyro_Scale_Range;
+      Reserved_0_2 : Uint3;
+   end record
+     with Size => 8;
+   for Gyro_Config use record
+      XG_Selftest at 0 range 7 .. 7;
+      YG_Selftest at 0 range 6 .. 6;
+      ZG_Selftest at 0 range 5 .. 5;
+      Scale_Range at 0 range 3 .. 4;
+      Reserved_0_2 at 0 range 0 .. 2;
+   end record;
+   GYRO_CONFIG_ADDRESS : constant UInt8 := 16#1B#;
+
+   type Accel_Config is record
+      XA_Selftest : Boolean;
+      YA_Selftest : Boolean;
+      ZA_Selftest : Boolean;
+      Scale_range : MPU60x0_Accel_Scale_Range;
+      Reserved_0_2 : UInt3;
+   end record
+     with Size => 8;
+   for Accel_Config use record
+      XA_Selftest at 0 range 7 .. 7;
+      YA_Selftest at 0 range 6 .. 6;
+      ZA_Selftest at 0 range 5 .. 5;
+      Scale_Range at 0 range 3 .. 4;
+      Reserved_0_2 at 0 range 0 .. 2;
+   end record;
+   ACCEL_CONFIG_ADDRESS : constant UInt8 := 16#1C#;
+
+   -- TODO : FIFO enable register
+
+
+   type Int_Pin_Config is record
+      Int_Level : Boolean;
+      Int_Open : Boolean;
+      Latch_Int_Enable : Boolean;
+      Int_Read_Clear : Boolean;
+      FSync_Int_Level : Boolean;
+      FSync_Int_Enable : Boolean;
+      I2C_Bypass_Enable : Boolean;
+      Reserved_0 : Boolean;
+   end record
+     with Size => 8;
+   for Int_Pin_Config use record
+      Int_Level at 0 range 7 .. 7;
+      Int_Open at 0 range 6 .. 6;
+      Latch_Int_Enable at 0 range 5 .. 5;
+      Int_Read_Clear at 0 range 4 .. 4;
+      FSync_Int_Level at 0 range 3 .. 3;
+      FSync_Int_Enable at 0 range 2 .. 2;
+      I2C_Bypass_Enable at 0 range 1 .. 1;
+      Reserved_0 at 0 range 0 .. 0;
+   end record;
+   INT_PIN_CFG_ADDRESS : constant Integer := 16#37#;
+
+
+
+   type Byte_Array is array (Positive range <>) of UInt8
+     with Alignment => 2;
+
+   type MPU60x0_Device is tagged limited null record;
+
+   procedure Read_Port (This : MPU60x0_Device;
+                        Address : UInt8;
+                        Data : out Byte_Array);
+
+   procedure Write_Port (This : MPU60x0_Device;
+                         Address : UInt8;
+                         Data : UInt8);
+
+end MPU60x0;

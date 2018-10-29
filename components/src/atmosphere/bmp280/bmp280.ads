@@ -77,9 +77,6 @@ package BMP280 is
       Filter_Coefficient : UInt3;
    end record;
 
-   type Byte_Array is array (Positive range <>) of UInt8
-     with Alignment => 2;
-
    procedure Configure (This : in out BMP280_Device;
                         Configuration : BMP280_Configuration);
 
@@ -90,6 +87,9 @@ package BMP280 is
                                 Values : out BMP280_Values_Float);
 
 private
+
+   type Byte_Array is array (Positive range <>) of UInt8
+     with Alignment => 2;
 
    BMP280_Device_Id : constant UInt8 := 16#58#;
    BMP280_Reset_Magic : constant UInt8 := 16#B6#;
@@ -170,7 +170,9 @@ private
       Reserved_44_47 : UInt4 := 0;
    end record
      with Size => 48;
-   for BMP280_Raw_Readout use record -- TODO : Check LSB issues
+   for BMP280_Raw_Readout use record
+      -- TODO : Check LSB issues
+      -- TODO : Make this ue decimals
       Pressure       at 16#0# range 0 .. 19;
       Reserved_20_23 at 16#0# range 20 .. 23;
       Temperature    at 16#3# range 0 .. 19;
