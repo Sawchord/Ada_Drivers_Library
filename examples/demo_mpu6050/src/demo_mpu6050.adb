@@ -51,6 +51,7 @@ with BMP280.SPI;
 with MPU60x0; use MPU60x0;
 with MPU60x0.I2C;
 
+with Ravenscar_Time;
 
 procedure Demo_MPU6050 is
 
@@ -79,7 +80,7 @@ procedure Demo_MPU6050 is
       Configure_IO(UART_Pins,
                    (Mode => Mode_AF,
                     AF => GPIO_AF_USART1_7,
-                    Resistors => Pull_Up,
+                    Resistors => Floating,
                     AF_Speed => Speed_50MHz,
                     AF_Output_Type => Push_Pull));
 
@@ -104,12 +105,12 @@ procedure Demo_MPU6050 is
       Configure_IO(I2C_Pins,
                    (Mode => Mode_AF,
                     AF => GPIO_AF_I2C1_4,
-                    Resistors => Pull_Up,
+                    Resistors => Floating,
                     AF_Speed => Speed_50MHz,
                     AF_Output_Type => Open_Drain));
 
       Configure(I2C_2, (
-                Clock_Speed => 100_000,
+                Clock_Speed => 400_000,
                 Mode => I2C_Mode,
                 Duty_Cycle => DutyCycle_2,
                 Addressing_Mode => Addressing_Mode_7bit,
@@ -128,7 +129,7 @@ procedure Demo_MPU6050 is
       Configure_IO(SPI_Pins,
                    (Mode           => Mode_AF,
                     AF             => GPIO_AF_SPI1_5,
-                    Resistors      => Pull_Up,
+                    Resistors      => Floating,
                     AF_Speed       => Speed_50MHz,
                     AF_Output_Type => Push_Pull));
 
@@ -197,8 +198,8 @@ procedure Demo_MPU6050 is
    package BMP280_SPI is new BMP280.SPI (BMP280_Device);
    Pressure_Sensor : BMP280_SPI.SPI_BMP280_Device (SPI_1'Access, PD7'Access);
 
-   package MPU6000_I2C is new MPU60x0.I2C (MPU60x0_Device);
-   IMU_Sensor : MPU6000_I2C.I2C_MPU60x0_Device (I2C_1'Access, MPU6000_I2C.Low);
+   package MPU6050_I2C is new MPU60x0.I2C (MPU60x0_Device);
+   IMU_Sensor : MPU6050_I2C.I2C_MPU60x0_Device (I2C_2'Access, MPU6050_I2C.Low);
 begin
 
    Initialize_UART;
@@ -224,10 +225,12 @@ begin
 
    -- Configure the IMU
    declare
-      Conf : MPU60x0_Configuration := (Accel_Scale_Range => g2,
+      Conf : MPU60x0_Configuration := (Time => Ravenscar_Time.Delays,
+                                       Accel_Scale_Range => g2,
                                        Gyro_Scale_Range => deg_250_s);
    begin
       IMU_Sensor.Configure (Conf);
+      null;
    end;
 
    loop
@@ -237,9 +240,9 @@ begin
          Values : BMP280_Values_Float;
       begin
          Pressure_Sensor.Read_Values_Float (Values);
-         Put("T: " & Values.Temperature'Img);
-         Put(" P: " & Values.Pressure'Img);
-         New_Line;
+         --Put("T: " & Values.Temperature'Img);
+         --Put(" P: " & Values.Pressure'Img);
+         --New_Line;
       end;
 
       -- Read out IMU:
@@ -247,16 +250,23 @@ begin
          Values : MPU60x0_Sensor_Reading_Float;
       begin
          IMU_Sensor.Read_Values_Float (Values);
+         Put_Line ("T: " & Values.Temp'Img);
+
          Put ( "X: " & Values.Accel_X'Img);
          Put (" Y: " & Values.Accel_Y'Img);
          Put (" Z: " & Values.Accel_Z'Img);
          New_Line;
+
+         --Put ( "X: " & Values.Gyro_X'Img);
+         --Put (" Y: " & Values.Gyro_Y'Img);
+         --Put (" Z: " & Values.Gyro_Z'Img);
+         --New_Line;
       end;
 
       Put_Line ("Hello  " & Count'Img);
       Count := Count + 1;
 
-      T := T + Milliseconds (200);
+      T := T + Milliseconds (50);
       delay until T;
 
    end loop;

@@ -29,21 +29,29 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+with System;
+with Interfaces; use Interfaces;
+
 with HAL; use HAL;
+with HAL.Time;
 
 package MPU60x0 is
 
    --  TODO: Definition of Configuration and Value record
    type MPU60x0_Sensor_Reading is record
-      Accel_X : UInt16;
-      Accel_Y : UInt16;
-      Accel_Z : UInt16;
-      Temp    : UInt16;
-      Gyro_X  : UInt16;
-      Gyro_Y  : UInt16;
-      Gyro_Z  : UInt16;
+      Accel_X : Integer_16;
+      Accel_Y : Integer_16;
+      Accel_Z : Integer_16;
+      Temp    : Integer_16;
+      Gyro_X  : Integer_16;
+      Gyro_Y  : Integer_16;
+      Gyro_Z  : Integer_16;
    end record
      with Size => 112;
+
+   -- Since the Values are stored in big endian order in the sensor
+   for MPU60x0_Sensor_Reading'Bit_Order use System.High_Order_First;
+   for MPU60x0_Sensor_Reading'Scalar_Storage_Order use System.High_Order_First;
    pragma Pack (MPU60x0_Sensor_Reading);
 
    type MPU60x0_Sensor_Reading_Float is record
@@ -69,6 +77,7 @@ package MPU60x0 is
    for MPU60x0_Accel_Scale_Range use (g2 => 0, g4 => 1, g8 => 2, g16 => 3);
 
    type MPU60x0_Configuration is record
+      Time : HAL.Time.Any_Delays;
       Accel_Scale_Range : MPU60x0_Accel_Scale_Range;
       Gyro_Scale_Range : MPU60x0_Gyro_Scale_Range;
       --  TODO: Digital Filter setting
@@ -81,8 +90,10 @@ package MPU60x0 is
 
    procedure Configure (This : in out MPU60x0_Device;
                         Conf : MPU60x0_Configuration);
+
    procedure Read_Values (This : MPU60x0_Device;
                           Values : in out MPU60x0_Sensor_Reading);
+
    procedure Read_Values_Float (This : MPU60x0_Device;
                                 Values : in out MPU60x0_Sensor_Reading_Float);
 
@@ -324,19 +335,8 @@ private
 
    --  TODO : FiFO count and Data
 
-   type Who_Am_I is record
-      Reserved_7 : Boolean;
-      Whoami     : UInt6;
-      Reserved_0 : Boolean;
-   end record
-     with Size => 8;
-   for Who_Am_I use record
-      Reserved_7 at 0 range 7 .. 7;
-      Whoami     at 0 range 1 .. 6;
-      Reserved_0 at 0 range 0 .. 0;
-   end record;
    WHOAMI_ADDRESS : constant UInt8 := 16#75#;
-   WHOAMI_VALUE : constant UInt6 := 2#110100#;
+   WHOAMI_VALUE : constant UInt8 := 2#01101000#;
 
 
    type Byte_Array is array (Positive range <>) of UInt8

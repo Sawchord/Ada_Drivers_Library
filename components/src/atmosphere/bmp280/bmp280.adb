@@ -40,16 +40,15 @@ package body BMP280 is
                         Configuration : BMP280_Configuration) is
 
       function Config_To_Uint8 is new
-        Ada.Unchecked_Conversion (Source => BMP280_Config,
-                                  Target => UInt8);
+        Ada.Unchecked_Conversion (BMP280_Config, UInt8);
 
       function Control_To_Uint8 is new
-        Ada.Unchecked_Conversion (Source => BMP280_Control,
-                                  Target => UInt8);
+        Ada.Unchecked_Conversion (BMP280_Control, UInt8);
 
       function To_Calibration is new
-        Ada.Unchecked_Conversion (Source => Byte_Array,
-                                  Target => BMP280_Calibration);
+        Ada.Unchecked_Conversion (Byte_Array, BMP280_Calibration);
+
+      Device_Not_Found : Exception;
 
       D_Id : Byte_Array (1 .. 1);
       Config : BMP280_Config;
@@ -60,7 +59,7 @@ package body BMP280 is
       --  Check the Device Id
       Dispatch (This).Read_Port (BMP280_Device_Id_Address, D_Id);
       if D_Id (1) /= BMP280_Device_Id then
-         return;
+         raise Device_Not_Found;
       end if;
 
       --  Read the Calibration Data
