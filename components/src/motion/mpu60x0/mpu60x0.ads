@@ -33,9 +33,30 @@ with HAL; use HAL;
 
 package MPU60x0 is
 
-   type MPU60x0_Device is tagged limited private;
-
    --  TODO: Definition of Configuration and Value record
+   type MPU60x0_Sensor_Reading is record
+      Accel_X : UInt16;
+      Accel_Y : UInt16;
+      Accel_Z : UInt16;
+      Temp    : UInt16;
+      Gyro_X  : UInt16;
+      Gyro_Y  : UInt16;
+      Gyro_Z  : UInt16;
+   end record
+     with Size => 112;
+   pragma Pack (MPU60x0_Sensor_Reading);
+
+   type MPU60x0_Sensor_Reading_Float is record
+      Accel_X : Float;
+      Accel_Y : Float;
+      Accel_Z : Float;
+      Temp    : Float;
+      Gyro_X  : Float;
+      Gyro_Y  : Float;
+      Gyro_Z  : Float;
+   end record
+     with Size => 224;
+   pragma Pack (MPU60x0_Sensor_Reading_Float);
 
    type MPU60x0_Gyro_Scale_Range is (deg_250_s, deg_500_s,
                                      deg_1000_s, deg_2500_s)
@@ -47,6 +68,23 @@ package MPU60x0 is
      with Size => 2;
    for MPU60x0_Accel_Scale_Range use (g2 => 0, g4 => 1, g8 => 2, g16 => 3);
 
+   type MPU60x0_Configuration is record
+      Accel_Scale_Range : MPU60x0_Accel_Scale_Range;
+      Gyro_Scale_Range : MPU60x0_Gyro_Scale_Range;
+      --  TODO: Digital Filter setting
+      --  TODO: Sample Speed setting
+      --  TODO: Clock source settin
+   end record;
+   type MPU60x0_Config_Access is access all MPU60x0_Configuration;
+
+   type MPU60x0_Device is tagged limited private;
+
+   procedure Configure (This : in out MPU60x0_Device;
+                        Conf : MPU60x0_Configuration);
+   procedure Read_Values (This : MPU60x0_Device;
+                          Values : in out MPU60x0_Sensor_Reading);
+   procedure Read_Values_Float (This : MPU60x0_Device;
+                                Values : in out MPU60x0_Sensor_Reading_Float);
 
 private
 
@@ -186,17 +224,7 @@ private
    end record;
    INT_STATUS_ADDRESS : constant UInt8 := 16#3A#;
 
-   type Sensor_Reading is record
-      Accel_X : UInt16;
-      Accel_Y : UInt16;
-      Accel_Z : UInt16;
-      Temp    : UInt16;
-      Gyro_X  : UInt16;
-      Gyro_Y  : UInt16;
-      Gyro_Z  : UInt16;
-   end record
-     with Size => 112;
-   pragma Pack (Sensor_Reading);
+
    SENSOR_DATA_ADDRESS : constant UInt8 := 16#3B#;
 
 
@@ -314,7 +342,9 @@ private
    type Byte_Array is array (Positive range <>) of UInt8
      with Alignment => 2;
 
-   type MPU60x0_Device is tagged limited null record;
+   type MPU60x0_Device is tagged limited record
+      Conf : MPU60x0_Configuration;
+   end record;
 
    procedure Read_Port (This : MPU60x0_Device;
                         Address : UInt8;

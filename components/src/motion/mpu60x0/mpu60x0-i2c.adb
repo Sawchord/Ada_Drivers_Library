@@ -29,42 +29,48 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-package body MPU60x0 is
+with Ada.Unchecked_Conversion;
+package body MPU60x0.I2C is
 
+   function Rep is new Ada.Unchecked_Conversion (SDO_Pin, UInt8);
 
-   procedure Configure (This : in out MPU60x0_Device;
-                        Conf : MPU60x0_Configuration) is
-   begin
-      This.Conf := Conf;
-   end Configure;
-
-   procedure Read_Values (This : MPU60x0_Device;
-                          Values : in out MPU60x0_Sensor_Reading) is
-   begin
-      null;
-   end Read_Values;
-
-   procedure Read_Values_Float (This : MPU60x0_Device;
-                                Values : in out MPU60x0_Sensor_Reading_Float) is
-   begin
-      null;
-   end Read_Values_Float;
-
-
-   procedure Read_Port (This : MPU60x0_Device;
+   overriding
+   procedure Read_Port (This : I2C_MPU60x0_Device;
                         Address : UInt8;
                         Data : out Byte_Array) is
-      Not_Implemented_Error : exception;
+
+      Status : I2C_Status;
+
+      Communication_Error : exception;
+
    begin
-      raise Not_Implemented_Error;
+      This.Port.Mem_Read (UInt10 (Rep (This.SDO)), UInt16 (Address),
+                          Memory_Size_8b, I2C_Data (Data (Data'Range)),
+                          Status);
+
+      if Status /= Ok then
+         raise Communication_Error;
+      end if;
    end Read_Port;
 
-   procedure Write_Port (This : MPU60x0_Device;
+
+   overriding
+   procedure Write_Port (This : I2C_MPU60x0_Device;
                          Address : UInt8;
                          Data : UInt8) is
-      Not_Implemented_Error : exception;
+
+      Port_Data : constant I2C_Data (1 .. 1) := (1 => Data);
+      Status : I2C_Status;
+
+      Communication_Error : exception;
    begin
-      raise Not_Implemented_Error;
+      This.Port.Mem_Write (UInt10 (Rep (This.SDO)), UInt16 (Address),
+                          Memory_Size_8b, Port_Data, Status);
+
+      if Status /= Ok then
+         raise Communication_Error;
+      end if;
    end Write_Port;
 
-end MPU60x0;
+
+end MPU60x0.I2C;

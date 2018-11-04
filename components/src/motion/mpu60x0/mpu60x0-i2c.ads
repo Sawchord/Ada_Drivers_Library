@@ -29,42 +29,36 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-package body MPU60x0 is
+with HAL; use HAL;
+with HAL.I2C; use HAL.I2C;
 
+with MPU60x0; use MPU60x0;
+generic
+   type Some_MPU60x0_Device is new MPU60x0_Device with private;
+package MPU60x0.I2C is
 
-   procedure Configure (This : in out MPU60x0_Device;
-                        Conf : MPU60x0_Configuration) is
-   begin
-      This.Conf := Conf;
-   end Configure;
+   type SDO_Pin is (Low, High);
+   for SDO_Pin use (Low => 2#11010000#,
+                    High => 2#11010010#);
 
-   procedure Read_Values (This : MPU60x0_Device;
-                          Values : in out MPU60x0_Sensor_Reading) is
-   begin
-      null;
-   end Read_Values;
+   type I2C_MPU60x0_Device (Port : Any_I2C_Port;
+                            SDO : SDO_Pin)
+   is new Some_MPU60x0_Device with private;
 
-   procedure Read_Values_Float (This : MPU60x0_Device;
-                                Values : in out MPU60x0_Sensor_Reading_Float) is
-   begin
-      null;
-   end Read_Values_Float;
+private
 
+   type I2C_MPU60x0_Device (Port : Any_I2C_Port;
+                            SDO : SDO_Pin)
+   is new Some_MPU60x0_Device with null record;
 
-   procedure Read_Port (This : MPU60x0_Device;
+   overriding
+   procedure Read_Port (This : I2C_MPU60x0_Device;
                         Address : UInt8;
-                        Data : out Byte_Array) is
-      Not_Implemented_Error : exception;
-   begin
-      raise Not_Implemented_Error;
-   end Read_Port;
+                        Data : out Byte_Array);
 
-   procedure Write_Port (This : MPU60x0_Device;
+   overriding
+   procedure Write_Port (This : I2C_MPU60x0_Device;
                          Address : UInt8;
-                         Data : UInt8) is
-      Not_Implemented_Error : exception;
-   begin
-      raise Not_Implemented_Error;
-   end Write_Port;
+                         Data : UInt8);
 
-end MPU60x0;
+end MPU60x0.I2C;

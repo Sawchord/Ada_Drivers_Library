@@ -172,7 +172,7 @@ private
      with Size => 48;
    for BMP280_Raw_Readout use record
       --  TODO : Check LSB issues
-      --  TODO : Make this ue decimals
+      --  TODO : Make this use decimals
       Pressure       at 16#0# range 0 .. 19;
       Reserved_20_23 at 16#0# range 20 .. 23;
       Temperature    at 16#3# range 0 .. 19;

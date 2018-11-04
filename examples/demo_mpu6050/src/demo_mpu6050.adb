@@ -40,19 +40,17 @@ with HAL.I2C; use HAL.I2C;
 
 with STM32.Device;  use STM32.Device;
 
-with STM32;      use STM32;
 with STM32.GPIO; use STM32.GPIO;
 with STM32.SPI;  use STM32.SPI;
 with STM32.I2C; use STM32.I2C;
 with STM32.USARTs; use STM32.USARTs;
 
-with STM32_SVD.I2C;
-
 with BMP280; use BMP280;
 with BMP280.SPI;
-with BMP280.I2C;
 
-with System.Machine_Code;
+with MPU60x0; use MPU60x0;
+with MPU60x0.I2C;
+
 
 procedure Demo_MPU6050 is
 
@@ -197,9 +195,10 @@ procedure Demo_MPU6050 is
    Count : Integer := 0;
 
    package BMP280_SPI is new BMP280.SPI (BMP280_Device);
-   Sensor1 : BMP280_SPI.SPI_BMP280_Device (SPI_1'Access, PD7'Access);
+   Pressure_Sensor : BMP280_SPI.SPI_BMP280_Device (SPI_1'Access, PD7'Access);
 
-   IData : SPI_Data_8b := (16#D0#, 0);
+   package MPU6000_I2C is new MPU60x0.I2C (MPU60x0_Device);
+   IMU_Sensor : MPU6000_I2C.I2C_MPU60x0_Device (I2C_1'Access, MPU6000_I2C.Low);
 begin
 
    Initialize_UART;
@@ -220,19 +219,38 @@ begin
          Pressure_Oversampling => x16,
          Filter_Coefficient => 0);
    begin
-      Sensor1.Configure(Conf);
-      null;
+      Pressure_Sensor.Configure(Conf);
+   end;
+
+   -- Configure the IMU
+   declare
+      Conf : MPU60x0_Configuration := (Accel_Scale_Range => g2,
+                                       Gyro_Scale_Range => deg_250_s);
+   begin
+      IMU_Sensor.Configure (Conf);
    end;
 
    loop
 
+      -- Read out Pressure sensor
       declare
          Values : BMP280_Values_Float;
       begin
-         Sensor1.Read_Values_Float(Values);
-         Put_Line("Temp1: " & Values.Temperature'Img);
-         Put_Line("Pres1: " & Values.Pressure'Img);
-         null;
+         Pressure_Sensor.Read_Values_Float (Values);
+         Put("T: " & Values.Temperature'Img);
+         Put(" P: " & Values.Pressure'Img);
+         New_Line;
+      end;
+
+      -- Read out IMU:
+      declare
+         Values : MPU60x0_Sensor_Reading_Float;
+      begin
+         IMU_Sensor.Read_Values_Float (Values);
+         Put ( "X: " & Values.Accel_X'Img);
+         Put (" Y: " & Values.Accel_Y'Img);
+         Put (" Z: " & Values.Accel_Z'Img);
+         New_Line;
       end;
 
       Put_Line ("Hello  " & Count'Img);
