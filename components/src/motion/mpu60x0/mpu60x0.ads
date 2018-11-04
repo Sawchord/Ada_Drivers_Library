@@ -84,6 +84,16 @@ package MPU60x0 is
       --  TODO: Sample Speed setting
       --  TODO: Clock source settin
    end record;
+
+   type MPU60x0_Self_Test_Results is record
+      XA_Deriv : Float;
+      YA_Deriv : Float;
+      ZA_Deriv : Float;
+      XG_Deriv : Float;
+      YG_Deriv : Float;
+      ZG_Deriv : Float;
+   end record;
+
    type MPU60x0_Config_Access is access all MPU60x0_Configuration;
 
    type MPU60x0_Device is tagged limited private;
@@ -96,6 +106,9 @@ package MPU60x0 is
 
    procedure Read_Values_Float (This : MPU60x0_Device;
                                 Values : in out MPU60x0_Sensor_Reading_Float);
+
+   procedure Get_ST_Results (This : MPU60x0_Device;
+                             Values : MPU60x0_Self_Test_Results);
 
 private
 
@@ -125,6 +138,9 @@ private
       ZA_Test_L    at 3 range 0 .. 1;
    end record;
    SELF_TEST_REG_ADDRESS : constant UInt8 := 16#0D#;
+
+   function Get_G_FT (Input : UInt4) return Float;
+   function Get_A_FT (Input_H : UInt4; Input_L : UInt2) return Float;
 
    type Sample_Rate_Divider is new UInt8;
    SR_DIV_ADDRESS : constant UInt8 := 16#19#;
@@ -338,9 +354,9 @@ private
    WHOAMI_ADDRESS : constant UInt8 := 16#75#;
    WHOAMI_VALUE : constant UInt8 := 2#01101000#;
 
-
    type Byte_Array is array (Positive range <>) of UInt8
      with Alignment => 2;
+   type Byte_Array_Access is access Byte_Array;
 
    type MPU60x0_Device is tagged limited record
       Conf : MPU60x0_Configuration;

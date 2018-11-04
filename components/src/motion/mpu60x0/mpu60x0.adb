@@ -30,8 +30,12 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
+with Ada.Numerics.Generic_Elementary_Functions;
 
 package body MPU60x0 is
+
+   package Float_Math is new Ada.Numerics.Generic_Elementary_Functions (Float);
+   use Float_Math;
 
     subtype Dispatch is MPU60x0_Device'Class;
 
@@ -164,5 +168,25 @@ package body MPU60x0 is
    begin
       raise Not_Implemented_Error;
    end Write_Port;
+
+   procedure Get_ST_Results (This : MPU60x0_Device;
+                             Values : MPU60x0_Self_Test_Results) is
+      --ST_Reg : Self_Test_Registers;
+
+   begin
+      null;
+      -- Dispatch (This).Read_Port (SELF_TEST_REG_ADDRESS, To_Byte_Array (ST_Reg'Access));
+   end Get_ST_Results;
+
+   function Get_G_FT (Input : UInt4) return Float is
+   begin
+      return 25.0 * 131.0 * (1.046**(Float (Input - 1)));
+   end Get_G_FT;
+
+   function Get_A_FT (Input_H : UInt4; Input_L : UInt2) return Float is
+      Val : constant UInt6 := UInt6 (Input_H) * 4 + UInt6 (Input_L);
+   begin
+      return 4096.0 * 0.34 * ((0.92 / 0.34)**(Float (Val - 1) / 30.0));
+   end Get_A_FT;
 
 end MPU60x0;
