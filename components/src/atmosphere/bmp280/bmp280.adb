@@ -70,21 +70,24 @@ package body BMP280 is
       Control := (osrs_t => Configuration.Temperature_Oversampling,
                   osrs_p => Configuration.Pressure_Oversampling,
                   mode => Normal);
-      Dispatch (This).Write_Port (BMP280_Control_Address, Control_To_Uint8 (Control));
+
+      Dispatch (This).Write_Port (BMP280_Control_Address,
+                                  Control_To_Uint8 (Control));
 
       Config := (t_sb => Configuration.Standby_Time,
                  filter => Configuration.Filter_Coefficient,
                  reserved_1 => False,
                  spi3w => False);
-      Dispatch (This).Write_Port (BMP280_Config_Address, Config_To_Uint8 (Config));
+      Dispatch (This).Write_Port (BMP280_Config_Address,
+                                  Config_To_Uint8 (Config));
 
    end Configure;
 
    procedure Read_Values_Int (This : BMP280_Device;
                               Values : out BMP280_Values_Int) is
 
-      function To_Readout is new Ada.Unchecked_Conversion(Byte_Array,
-                                                          BMP280_Raw_Readout);
+      function To_Readout is new Ada.Unchecked_Conversion (Byte_Array,
+                                                           BMP280_Raw_Readout);
 
       Readout : BMP280_Raw_Readout;
       C_Data : Byte_Array (1 .. BMP280_Raw_Readout'Size / 8);
@@ -120,10 +123,8 @@ package body BMP280 is
                                     TFine : out Integer_32)
                                     return Integer_32 is
 
-      function U2I is new Ada.Unchecked_Conversion (Source => Unsigned_32,
-                                                    Target => Integer_32);
-      function I2U is new Ada.Unchecked_Conversion (Source => Integer_32,
-                                                    Target => Unsigned_32);
+      function U2I is new Ada.Unchecked_Conversion (Unsigned_32, Integer_32);
+      function I2U is new Ada.Unchecked_Conversion (Integer_32, Unsigned_32);
 
       function Shr (i : Integer_32; v : Integer) return Integer_32;
       function Shr (i : Integer_32; v : Integer) return Integer_32 is
@@ -158,10 +159,9 @@ package body BMP280 is
                                  Readout : BMP280_Raw_Readout;
                                  TFine : Integer_32)
                                  return Integer_64 is
-      function U2I is new Ada.Unchecked_Conversion (Source => Unsigned_64,
-                                                    Target => Integer_64);
-      function I2U is new Ada.Unchecked_Conversion (Source => Integer_64,
-                                                    Target => Unsigned_64);
+
+      function U2I is new Ada.Unchecked_Conversion (Unsigned_64, Integer_64);
+      function I2U is new Ada.Unchecked_Conversion (Integer_64, Unsigned_64);
 
       function Shr (i : Integer_64; v : Integer) return Integer_64;
       function Shr (i : Integer_64; v : Integer) return Integer_64 is

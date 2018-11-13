@@ -85,13 +85,13 @@ package MPU60x0 is
       --  TODO: Clock source settin
    end record;
 
-   type MPU60x0_Self_Test_Results is record
-      XA_Deriv : Float;
-      YA_Deriv : Float;
-      ZA_Deriv : Float;
-      XG_Deriv : Float;
-      YG_Deriv : Float;
-      ZG_Deriv : Float;
+   type MPU60x0_Self_Test_Response is record
+      XA : Float;
+      YA : Float;
+      ZA : Float;
+      XG : Float;
+      YG : Float;
+      ZG : Float;
    end record;
 
    type MPU60x0_Config_Access is access all MPU60x0_Configuration;
@@ -108,7 +108,7 @@ package MPU60x0 is
                                 Values : in out MPU60x0_Sensor_Reading_Float);
 
    procedure Get_ST_Results (This : MPU60x0_Device;
-                             Values : MPU60x0_Self_Test_Results);
+                             Values : out MPU60x0_Self_Test_Response);
 
 private
 
@@ -139,8 +139,9 @@ private
    end record;
    SELF_TEST_REG_ADDRESS : constant UInt8 := 16#0D#;
 
-   function Get_G_FT (Input : UInt4) return Float;
-   function Get_A_FT (Input_H : UInt4; Input_L : UInt2) return Float;
+   function Get_Deriv (Read1 : Float; Read2 : Float; FT : Float) return Float;
+   function Get_G_FT (Input : UInt5) return Float;
+   function Get_A_FT (Input_H : UInt3; Input_L : UInt2) return Float;
 
    type Sample_Rate_Divider is new UInt8;
    SR_DIV_ADDRESS : constant UInt8 := 16#19#;
