@@ -83,21 +83,8 @@ package body BMP280 is
    procedure Read_Values_Int (This : BMP280_Device;
                               Values : out BMP280_Values_Int) is
 
-      function To_Readout (C_Data : Byte_Array) return BMP280_Raw_Readout;
-      function To_Readout (C_Data : Byte_Array) return BMP280_Raw_Readout is
-      begin
-         -- TODO: Use Scalar High Order OR Remove Reserved as they are not needed
-         return BMP280_Raw_Readout'(Temperature => UInt20 (
-                                    Shift_Left (Unsigned_32 (C_Data (4)), 12)
-                                    or Shift_Left (Unsigned_32 (C_Data (5)), 4)
-                                    or Shift_Right (Unsigned_32 (C_Data (6)), 4)),
-                                    Reserved_20_23 => 0,
-                                    Pressure => UInt20 (
-                                      Shift_Left (Unsigned_32 (C_Data (1)), 12)
-                                      or Shift_Left (Unsigned_32 (C_Data (2)), 4)
-                                      or Shift_Right (Unsigned_32 (C_Data (3)), 4)),
-                                    Reserved_44_47 => 0);
-      end To_Readout;
+      function To_Readout is new Ada.Unchecked_Conversion(Byte_Array,
+                                                          BMP280_Raw_Readout);
 
       Readout : BMP280_Raw_Readout;
       C_Data : Byte_Array (1 .. BMP280_Raw_Readout'Size / 8);

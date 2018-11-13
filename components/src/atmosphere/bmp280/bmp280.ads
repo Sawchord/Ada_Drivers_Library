@@ -29,6 +29,8 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+with System;
+
 with HAL; use HAL;
 with Interfaces; use Interfaces;
 
@@ -165,23 +167,19 @@ private
 
    type BMP280_Raw_Readout is record
       Pressure : UInt20;
-      Reserved_20_23 : UInt4 := 0;
       Temperature : UInt20;
-      Reserved_44_47 : UInt4 := 0;
    end record
      with Size => 48;
    for BMP280_Raw_Readout use record
-      --  TODO : Check LSB issues
       Pressure       at 0 range 0 .. 19;
-      Reserved_20_23 at 0 range 20 .. 23;
       Temperature    at 3 range 0 .. 19;
-      Reserved_44_47 at 3 range 20 .. 23;
    end record;
+
+   for BMP280_Raw_Readout'Bit_Order use System.High_Order_First;
+   for BMP280_Raw_Readout'Scalar_Storage_Order use System.High_Order_First;
 
    type BMP280_Device is tagged limited record
       Cal : BMP280_Calibration;
-      --  TODO: Storing Values necessary?
-      Raw : BMP280_Raw_Readout;
    end record;
 
 
