@@ -240,9 +240,9 @@ begin
          Values : BMP280_Values_Float;
       begin
          Pressure_Sensor.Read_Values_Float (Values);
-         --Put("T: " & Values.Temperature'Img);
-         --Put(" P: " & Values.Pressure'Img);
-         --New_Line;
+         Put("T: " & Values.Temperature'Img);
+         Put(" P: " & Values.Pressure'Img);
+         New_Line;
       end;
 
       -- Read out IMU:
@@ -266,7 +266,7 @@ begin
       Put_Line ("Hello  " & Count'Img);
       Count := Count + 1;
 
-      T := T + Milliseconds (50);
+      T := T + Milliseconds (200);
       delay until T;
 
    end loop;

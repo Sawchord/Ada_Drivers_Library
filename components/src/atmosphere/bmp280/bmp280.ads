@@ -81,7 +81,7 @@ package BMP280 is
                         Configuration : BMP280_Configuration);
 
    procedure Read_Values_Int (This : BMP280_Device;
-                              Value : out BMP280_Values_Int);
+                              Values : out BMP280_Values_Int);
 
    procedure Read_Values_Float (This : BMP280_Device;
                                 Values : out BMP280_Values_Float);
@@ -172,11 +172,10 @@ private
      with Size => 48;
    for BMP280_Raw_Readout use record
       --  TODO : Check LSB issues
-      --  TODO : Make this use decimals
-      Pressure       at 16#0# range 0 .. 19;
-      Reserved_20_23 at 16#0# range 20 .. 23;
-      Temperature    at 16#3# range 0 .. 19;
-      Reserved_44_47 at 16#3# range 20 .. 23;
+      Pressure       at 0 range 0 .. 19;
+      Reserved_20_23 at 0 range 20 .. 23;
+      Temperature    at 3 range 0 .. 19;
+      Reserved_44_47 at 3 range 20 .. 23;
    end record;
 
    type BMP280_Device is tagged limited record
@@ -187,12 +186,13 @@ private
 
 
    function Compensate_Temperature (This : BMP280_Device;
-                                    Readout : BMP280_Raw_Readout)
+                                    Readout : BMP280_Raw_Readout;
+                                    TFine : out Integer_32)
                                     return Integer_32;
 
    function Compensate_Pressure (This : BMP280_Device;
                                  Readout : BMP280_Raw_Readout;
-                                 Temperature : Integer_32)
+                                 TFine : Integer_32)
                                  return Integer_64;
 
 

@@ -349,7 +349,7 @@ private
    end record;
    POWER_MANAGEMENT2_ADDRESS : constant UInt8 := 16#6C#;
 
-   --  TODO : FiFO count and Data
+   --  TODO : FiFo count and Data
 
    WHOAMI_ADDRESS : constant UInt8 := 16#75#;
    WHOAMI_VALUE : constant UInt8 := 2#01101000#;

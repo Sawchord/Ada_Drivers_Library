@@ -81,11 +81,12 @@ package body BMP280 is
    end Configure;
 
    procedure Read_Values_Int (This : BMP280_Device;
-                              Value : out BMP280_Values_Int) is
+                              Values : out BMP280_Values_Int) is
 
       function To_Readout (C_Data : Byte_Array) return BMP280_Raw_Readout;
       function To_Readout (C_Data : Byte_Array) return BMP280_Raw_Readout is
       begin
+         -- TODO: Use Scalar High Order OR Remove Reserved as they are not needed
          return BMP280_Raw_Readout'(Temperature => UInt20 (
                                     Shift_Left (Unsigned_32 (C_Data (4)), 12)
                                     or Shift_Left (Unsigned_32 (C_Data (5)), 4)
@@ -100,12 +101,14 @@ package body BMP280 is
 
       Readout : BMP280_Raw_Readout;
       C_Data : Byte_Array (1 .. BMP280_Raw_Readout'Size / 8);
+
+      TFine : Integer_32;
    begin
 
       Dispatch (This).Read_Port (BMP280_Readout_Address, C_Data);
       Readout := To_Readout (C_Data);
-      Value.Temperature := This.Compensate_Temperature (Readout);
-      Value.Pressure := This.Compensate_Pressure (Readout, Value.Temperature);
+      Values.Temperature := This.Compensate_Temperature (Readout, TFine);
+      Values.Pressure := This.Compensate_Pressure (Readout, TFine);
 
    end Read_Values_Int;
 
@@ -126,7 +129,8 @@ package body BMP280 is
 
 
    function Compensate_Temperature (This : BMP280_Device;
-                                    Readout : BMP280_Raw_Readout)
+                                    Readout : BMP280_Raw_Readout;
+                                    TFine : out Integer_32)
                                     return Integer_32 is
 
       function U2I is new Ada.Unchecked_Conversion (Source => Unsigned_32,
@@ -158,13 +162,14 @@ package body BMP280 is
       var2 := (Shr (T, 4) - Integer_32 (This.Cal.dig_T1))**2;
       var2 := Shr (Shr (var2, 12) * Integer_32 (This.Cal.dig_T3), 14);
 
-      return Shr ((var1 + var2) * 5 + 128, 8);
+      TFine := var1 + var2;
+      return Shr ((TFine) * 5 + 128, 8);
 
    end Compensate_Temperature;
 
    function Compensate_Pressure (This : BMP280_Device;
                                  Readout : BMP280_Raw_Readout;
-                                 Temperature : Integer_32)
+                                 TFine : Integer_32)
                                  return Integer_64 is
       function U2I is new Ada.Unchecked_Conversion (Source => Unsigned_64,
                                                     Target => Integer_64);
@@ -189,9 +194,7 @@ package body BMP280 is
    begin
 
       p := Integer_64 (Readout.Pressure);
-      --  TODO: Calculating back and forth is inefficient
-      --  Find a better way to store t_fine
-      t_fine := (Shl (Integer_64 (Temperature), 8) - 128) / 5;
+      t_fine := Integer_64(TFine);
 
       var1 := t_fine - 128000;
       var2 := (var1**2) * Integer_64 (This.Cal.dig_P6);
